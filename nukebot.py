@@ -6,7 +6,7 @@ from ircnukes import ircnukes
 randomseed = 0
 nick = '[skynet]'
 name = 'nukes-ng bot'
-svr = ('irc.b0rk.co.uk', 6667)
+svr = ('irc.quakenet.eu.org', 6667)
 chan = '#nukes'
 game = None
 log = None

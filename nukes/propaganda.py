@@ -11,7 +11,7 @@ class propaganda(card):
 		self.__pop = pop
 
 	def __str__(self):
-		return "propaganda(%uM)"%self.__pop
+		return "p%u"%self.__pop
 	
 	def __repr__(self):
 		return "propaganda(%u)"%self.__pop

@@ -8,11 +8,9 @@ brutality set in the current, possibly terminal, era of human existence
 ./nukage.py - test rig for irc bot
 
 TODO:
- o Read card types + descriptions from a file
-   o format "100x clsname args..."
-   o do population statistically
  o Allow deterrents (priv command to transfer between deterrent/hand)
  o !status message
+ o Implement interceptors
  o save/restore support for nukebot
     o name2path / path2name
     o !savegame <name>
@@ -25,7 +23,7 @@ TODO:
  o Allow multiple chans
  o Spies
  o Secrets
- o Re-work retaliation logc maybe?
+ o Re-work retaliation logic maybe?
    o combine pwn and transfer_players
    o move pass_control and player_dead in to player (check if dead)
    o pass_control needs to check cards 
