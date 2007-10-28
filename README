@@ -11,6 +11,7 @@ TODO:
  o Implement interceptors
  o Allow deterrents (priv command to transfer between deterrent/hand)
  o !status message
+ o help <command> for detailed output
  o save/restore support for nukebot
     o name2path / path2name
     o !savegame <name>

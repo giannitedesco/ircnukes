@@ -3,9 +3,8 @@
 import nukes,irclib,random,time,os
 from ircnukes import ircnukes
 
-randomseed = 0
 nick = '[skynet]'
-name = 'nukes-ng bot'
+name = 'nukes-ng'
 svr = ('irc.quakenet.eu.org', 6667)
 chan = '#nukes'
 game = None
@@ -42,7 +41,7 @@ def cmd_priv(conn, nick, cmd):
 			conn.privmsg(chan, "GameOver: MAD, noone wins")
 		else:
 			conn.privmsg(chan, "GameOver: winner is %s "
-				"(%u million population"%(e.winner.name,
+				"with %u million population"%(e.winner.name,
 				e.winner.population))
 		game = None
 	except nukes.IllegalMoveError, e:
@@ -70,6 +69,8 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 		game = ircnukes(conn, chan)
 		conn.privmsg(chan, "Game started: %s"%game)
 		if logit == True:
+			randomseed = int(time.time())
+			random.seed(randomseed)
 			log = open("nukebot.log", "w")
 			log.write("randomseed %u\n"%randomseed)
 			log.flush()
@@ -92,7 +93,7 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 			conn.privmsg(chan, "GameOver: MAD, noone wins")
 		else:
 			conn.privmsg(chan, "GameOver: winner is %s "
-				"(%u million population"%(e.winner.name,
+				"with %u million population"%(e.winner.name,
 				e.winner.population))
 		game = None
 	except nukes.IllegalMoveError, e:
@@ -118,7 +119,8 @@ def irc_msg_pub(conn, ev):
 				ev.arguments()[0])
 	if ev.arguments()[0][0] != '!':
 		return
-	cmd_pub(conn, get_nick(ev.source()), ev.target(), ev.arguments()[0][1:])
+	cmd_pub(conn, get_nick(ev.source()),
+		ev.target(), ev.arguments()[0][1:], logit=True)
 
 def irc_msg_action(conn, ev):
 	print "[%s] * %s %s"%(ev.target(),
@@ -144,12 +146,11 @@ def irc_msg_umode(conn, ev):
 	conn.join(chan)
 
 def irc_msg_join(conn, ev):
+	if get_nick(ev.source()) != conn.get_nickname():
+		return
 	conn.privmsg(ev.target(), "Would you like to play a game?")
 
 if __name__ == "__main__":
-	randomseed = int(time.time())
-	random.seed(randomseed)
-
 	#irclib.DEBUG = True
 	irc = irclib.IRC()
 	irc.add_global_handler('umode', irc_msg_umode)
@@ -161,7 +162,7 @@ if __name__ == "__main__":
 
 
 	s = irc.server()
-	s.connect(svr[0], svr[1], nick, ircname=name)
+	s.connect(svr[0], svr[1], nick, ircname=name, username=name)
 
 	try:
 		irc.process_forever()
