@@ -8,9 +8,9 @@ brutality set in the current, possibly terminal, era of human existence
 ./nukage.py - test rig for irc bot
 
 TODO:
+ o Implement interceptors
  o Allow deterrents (priv command to transfer between deterrent/hand)
  o !status message
- o Implement interceptors
  o save/restore support for nukebot
     o name2path / path2name
     o !savegame <name>

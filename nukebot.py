@@ -41,7 +41,9 @@ def cmd_priv(conn, nick, cmd):
 		if e.winner == None:
 			conn.privmsg(chan, "GameOver: MAD, noone wins")
 		else:
-			conn.privmsg(chan, "GameOver: winner is %s"%(e.winner))
+			conn.privmsg(chan, "GameOver: winner is %s "
+				"(%u million population"%(e.winner.name,
+				e.winner.population))
 		game = None
 	except nukes.IllegalMoveError, e:
 		conn.privmsg(nick, "%s: Illegal Move: %s"%(e.player, e.desc))
@@ -89,7 +91,9 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 		if e.winner == None:
 			conn.privmsg(chan, "GameOver: MAD, noone wins")
 		else:
-			conn.privmsg(chan, "GameOver: winner is %s"%(e.winner))
+			conn.privmsg(chan, "GameOver: winner is %s "
+				"(%u million population"%(e.winner.name,
+				e.winner.population))
 		game = None
 	except nukes.IllegalMoveError, e:
 		conn.privmsg(chan, "%s: Illegal Move: %s"%(e.player, e.desc))

@@ -74,6 +74,8 @@ class ircnukes(nukes.game):
 
 	def __push_card(self, p, cmd='', arg=[]):
 		"Push a card in to your queue, eg. push 0 / push warhead(10)"
+		if len(arg) < 1:
+			return
 		c = p.queue_card(arg[0])
 		self.__get_queue(p)
 
