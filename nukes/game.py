@@ -7,24 +7,44 @@ from propaganda import propaganda
 from missile import missile
 from bomber import bomber
 from warhead import warhead
+from deck import deck
 
 class game:
 	"Basic game logic and state machine"
 	def __init__(self, name="nukes"):
 		self.__name = name
 		self.__state = GAME_STATE_INIT
-		self.__popcards = {5 : 100,
-				10 : 50,
-				15 : 25,
-				25 : 10,
-				50 : 5}
-		self.__cards = []
+		self.__popcards = deck("population")
+		self.__deck = deck("main")
 		self.__players = {}
 		self.__turn = []
 		self.cur = None
 		self.__corpses = {}
 
-		print "Game init: %s"%self.__name
+		self.__popcards.add_card(100, int, [5])
+		self.__popcards.add_card(50, int, [10])
+		self.__popcards.add_card(25, int, [15])
+		self.__popcards.add_card(10, int, [25])
+		self.__popcards.add_card(5, int, [50])
+
+		self.__deck.add_card(1, warhead, [NUKE_YIELD_100MT])
+		self.__deck.add_card(4, warhead, [NUKE_YIELD_50MT])
+		self.__deck.add_card(10, warhead, [NUKE_YIELD_20MT])
+		self.__deck.add_card(19, warhead, [NUKE_YIELD_10MT])
+
+		self.__deck.add_card(3, missile, [NUKE_YIELD_100MT, "saturn"])
+		self.__deck.add_card(9, missile, [NUKE_YIELD_20MT, "atlas"])
+		self.__deck.add_card(9, missile, [NUKE_YIELD_10MT, "polaris"])
+
+		# b70
+		self.__deck.add_card(6, bomber, [NUKE_YIELD_50MT, "b70"])
+
+		self.__deck.add_card(2, propaganda, [20])
+		self.__deck.add_card(6, propaganda, [10])
+		self.__deck.add_card(12, propaganda, [5])
+
+		print "Game init: %s (%u cards in deck)"%(self.__name,
+				len(self.__deck))
 
 	def __str__(self):
 		return "game(%s)"%self.__name
@@ -69,12 +89,17 @@ class game:
 	def kill_player(self, p):
 		if self.__corpses.has_key(p.name):
 			return
+		if not self.__players.has_key(p.name):
+			return
 
-		self.__corpses[p.name] = p
 		del self.__players[p.name]
-		if self.__turn.count(p):
-			self.__turn.remove(p)
-		p.population = 0
+
+		if self.__state == GAME_STATE_WAR:
+			self.__corpses[p.name] = p
+			if self.__turn.count(p):
+				self.__turn.remove(p)
+			p.population = 0
+
 		self.player_dead(p)
 
 	def state(self):
@@ -101,17 +126,7 @@ class game:
 
 	def __get_pop(self):
 		"Return a random population card"
-
-		if len(self.__popcards) == 0:
-			return 0
-
-		x = random.randint(0, len(self.__popcards) - 1)
-		k = self.__popcards.keys()[x]
-		self.__popcards[k] = self.__popcards[k] - 1
-		if self.__popcards[k] == 0:
-			del self.__popcards[k]
-
-		return k
+		return self.__popcards.deal_card()
 
 	def __randyield(self):
 		i = random.randint(0, 100)
@@ -126,18 +141,7 @@ class game:
 
 	def deal_card(self):
 		"Pick up a card from the top of the deck"
-
-		r = random.randint(1, 100)
-
-		# FIXME: use probability distributions
-		if r < 25:
-			return propaganda(random.randint(1, 10) * 5)
-		elif r < 50:
-			return warhead(self.__randyield())
-		elif r < 75:
-			return bomber(self.__randyield())
-		else:
-			return missile(self.__randyield())
+		return self.__deck.deal_card()
 
 	def add_player(self, p):
 		"Add a player to the game and deal the initial cards"
@@ -155,8 +159,6 @@ class game:
 		for i in range(0, 5):
 			p.population += self.__get_pop()
 
-		if p.name == 'jesus':
-			p.population -= 27
 		for i in range(0,9):
 			p.hand.append(self.deal_card())
 
@@ -194,8 +196,7 @@ class game:
 			self.cur = self.__corpses.values()[0]
 
 			# Do retaliation if we die in war time
-			if self.__state == GAME_STATE_WAR and \
-				len(self.__players):
+			if len(self.__players):
 				self.pass_control(self.cur, retaliate=True)
 				return
 			else:

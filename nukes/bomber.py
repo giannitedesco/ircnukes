@@ -7,15 +7,19 @@ from card import card
 from globals import *
 
 class bomber(card):
-	def __init__(self, max_payload=10):
+	def __init__(self, max_payload=10, name="bomber"):
 		self.max_payload = max_payload
 		self.payload = max_payload
+		self.__name = name
 
 	def __str__(self):
-		return "bomber(%u/%u)"%(self.payload,self.max_payload)
+		if self.__name == "bomber":
+			return "bomber(%u)"%self.max_payload
+		else:
+			return self.__name
 	
 	def __repr__(self):
-		return "bomber(%u)"%self.max_payload
+		return "%s(%u)"%(self.__name, self.max_payload)
 
 	def is_weapon(self):
 		return True

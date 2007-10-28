@@ -18,7 +18,7 @@ class warhead(card):
 		self.megatons = megatons
 
 	def __str__(self):
-		return "warhead(%uM)"%(self.megatons)
+		return "w%u"%(self.megatons)
 	
 	def __repr__(self):
 		return "warhead(%u)"%(self.megatons)

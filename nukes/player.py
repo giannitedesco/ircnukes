@@ -75,9 +75,10 @@ class player:
 		return self.hand.pop(idx)
 	
 	def __card_by_name(self, name):
-		strl = map(lambda x:x.__repr__().lower(), self.hand)
+		strl = map(lambda x:x.__str__().lower(), self.hand)
+		repl = map(lambda x:x.__repr__().lower(), self.hand)
 		for i in range(0, len(self.hand)):
-			if strl[i] != name.lower():
+			if repl[i] != name.lower() and strl[i] != name.lower():
 				continue
 			return self.hand.pop(i)
 		raise IllegalMoveError(self.game, self,
