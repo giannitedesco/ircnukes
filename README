@@ -1,0 +1,33 @@
+=======================================================================
+nukes-ng: Nuclear War, The next generation. v0.1
+An online zero-sum game which blends strategic thinking and unthinking
+brutality set in the current, possibly terminal, era of human existence
+=======================================================================
+
+./nukebot.py - irc bot version of the game
+./nukage.py - test rig for irc bot
+
+TODO:
+ o Read card types + descriptions from a file
+   o format "100x clsname args..."
+   o do population statistically
+ o Allow deterrents (priv command to transfer between deterrent/hand)
+ o !status message
+ o save/restore support for nukebot
+    o name2path / path2name
+    o !savegame <name>
+    o !restore <name>
+    o !listgames
+ o Blow up the world with triple yield 100MT warheads
+ o Miss a go if your power plant gets hit
+ o Keep player stats
+ o Disallow queueing before game
+ o Allow multiple chans
+ o Spies
+ o Secrets
+ o Re-work retaliation logc maybe?
+   o combine pwn and transfer_players
+   o move pass_control and player_dead in to player (check if dead)
+   o pass_control needs to check cards 
+   o player_dead should do retaliation stuff and chain up to game class
+ o Other special rules + cards?
