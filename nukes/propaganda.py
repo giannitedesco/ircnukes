@@ -25,6 +25,5 @@ class propaganda(card):
 		p.weapon = None
 		g.game_msg(" > %s uses propaganda on %s (%uM)"%(
 				p.name, tgt.name, self.__pop))
-		p.transfer_population(min(self.__pop, tgt.population))
-		tgt.pwn(self.__pop)
+		tgt.transfer_population(self.__pop, p)
 		card.dequeue(self, g, p, tgt)

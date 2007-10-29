@@ -56,17 +56,20 @@ class player:
 
 	def pwn(self, pwnage):
 		"Decrement population"
-		if pwnage >= self.population:
-			self.population = 0
+
+		i = min(self.population, pwnage)
+		self.population = self.population - i
+		if self.population == 0:
 			self.game.kill_player(self)
-			return
-		self.population = self.population - pwnage
 
-	def transfer_population(self, converts):
-		"Add population"
+	def transfer_population(self, converts, tgt):
+		"Transfer population to another player"
 
-		if self.population != 0:
-			self.population += converts
+		i = min(self.population, converts)
+		self.population = self.population - i
+		tgt.population = tgt.population + i
+		if self.population == 0:
+			self.game.kill_player(self)
 
 	def __card_by_idx(self, idx):
 		if idx < 0 or idx >= len(self.hand):
