@@ -81,11 +81,12 @@ class game:
 		p.name = new_name
 
 	def kill_player(self, p):
+		if p.state != PLAYER_STATE_ALIVE:
+			return
 		if self.__state == GAME_STATE_INIT:
 			if self.__players.has_key(p.name):
 				del self.__players[p.name]
-			return
-		if p.state != PLAYER_STATE_ALIVE:
+			self.player_dead(p)
 			return
 
 		if self.__turn.count(p):
