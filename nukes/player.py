@@ -14,6 +14,7 @@ class player:
 		self.weapon = None
 		self.game = None
 		self.state = PLAYER_STATE_ALIVE
+		self.missturns = 0
 		return
 	
 	def __str__(self):

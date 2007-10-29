@@ -8,8 +8,6 @@ brutality set in the current, possibly terminal, era of human existence
 ./nukage.py - test rig for irc bot
 
 TODO:
- o Re-work player logic maybe?
-   o Miss a go if your power plant gets hit
  o command line args for nukebot
  o Disallow queueing before game
  o Blow up the world with triple yield 100MT warheads

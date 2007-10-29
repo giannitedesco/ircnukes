@@ -30,6 +30,7 @@ class warhead(card):
 		b = self.__bodycounts[self.megatons]
 		r = random.randint(0, 16)
 		g = tgt.game
+		m = False
 		if r < 3:
 			g.game_msg(" > Dirty bomb, double yield")
 			b = b * 2
@@ -56,12 +57,15 @@ class warhead(card):
 				raise GameOverMan(tgt.game)
 		elif r < 12:
 			g.game_msg(" > Hit nuclear power plant, double yield")
+			g.game_msg(" > %s misses a turn!"%tgt.name)
 			b = b * 2
-			# FIXME: if not dead, enemy misses turn
+			m = True
 
 		g.game_msg(" > %s: %uM of your citizens die, boo hoo"%(
 				tgt.name, b))
 		tgt.pwn(b)
+		if m:
+			tgt.missturns = tgt.missturns + 1
 
 		return b
 

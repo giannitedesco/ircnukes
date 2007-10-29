@@ -222,10 +222,16 @@ class game:
 		if self.cur != None and self.cur.state == PLAYER_STATE_DEAD:
 			self.transition(GAME_STATE_PEACE)
 
-		# Re-start turn sequence
-		if len(self.__turn) == 0:
-			self.__turn = self.__alive()
+		while True:
+			# Re-start turn sequence
+			if len(self.__turn) == 0:
+				self.__turn = self.__alive()
 
-		# Figure out who's turn it is
-		self.cur = self.__turn.pop(0)
-		self.pass_control(self.cur)
+			# Figure out who's turn it is
+			self.cur = self.__turn.pop(0)
+			if self.cur.missturns:
+				self.cur.missturns = self.cur.missturns - 1
+				self.game_msg("%s: Miss a turn", self.cur.name)
+				continue
+			self.pass_control(self.cur)
+			break
