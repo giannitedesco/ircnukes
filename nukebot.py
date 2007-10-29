@@ -4,7 +4,7 @@ import nukes,irclib,random,time,os
 from ircnukes import ircnukes
 
 nick = '[skynet]'
-name = 'nukes-ng'
+name = 'ircnukes'
 svr = ('irc.quakenet.eu.org', 6667)
 chan = '#nukes'
 game = None
