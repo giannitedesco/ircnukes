@@ -1,5 +1,5 @@
 =======================================================================
-nukes-ng: Nuclear War, The next generation. v0.1
+ircnukes: Nuclear War for IRC. v0.1
 An online zero-sum game which blends strategic thinking and unthinking
 brutality set in the current, possibly terminal, era of human existence
 =======================================================================
@@ -8,25 +8,23 @@ brutality set in the current, possibly terminal, era of human existence
 ./nukage.py - test rig for irc bot
 
 TODO:
- o Implement interceptors
+ o Re-work player logic maybe?
+   o combine pwn and transfer_players
+   o Miss a go if your power plant gets hit
+ o command line args for nukebot
+ o Disallow queueing before game
+ o Blow up the world with triple yield 100MT warheads
  o Allow deterrents (priv command to transfer between deterrent/hand)
- o !status message
+ o Implement interceptors
  o help <command> for detailed output
  o save/restore support for nukebot
     o name2path / path2name
     o !savegame <name>
     o !restore <name>
     o !listgames
- o Blow up the world with triple yield 100MT warheads
- o Miss a go if your power plant gets hit
- o Keep player stats
- o Disallow queueing before game
+ o Keep player stats (existing points system too maybe?)
  o Allow multiple chans
  o Spies
  o Secrets
- o Re-work retaliation logic maybe?
-   o combine pwn and transfer_players
-   o move pass_control and player_dead in to player (check if dead)
-   o pass_control needs to check cards 
-   o player_dead should do retaliation stuff and chain up to game class
  o Other special rules + cards?
+ o Website / Code documentation / User FAQ

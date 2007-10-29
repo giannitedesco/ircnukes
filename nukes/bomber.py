@@ -19,7 +19,7 @@ class bomber(card):
 			return self.__name
 	
 	def __repr__(self):
-		return "%s(%u)"%(self.__name, self.max_payload)
+		return "%s(%u/%u)"%(self.__name, self.payload, self.max_payload)
 
 	def is_weapon(self):
 		return True

@@ -3,6 +3,14 @@ GAME_STATE_PEACE 	= 1
 GAME_STATE_WAR 		= 2
 GAME_STATE_OVER 	= 3
 
+# Player starts out as alive, is this way until population hits 0
+# if it's war they go to retaliation state until they use !done then
+# they go to dead state, if it's peace they go straight to dead
+# skipping retaliation altogether
+PLAYER_STATE_ALIVE	= 1
+PLAYER_STATE_RETALIATE	= 2
+PLAYER_STATE_DEAD	= 3
+
 CARD_STACK_LEN		= 2
 
 NUKE_YIELD_10MT 	= 10

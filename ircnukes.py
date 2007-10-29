@@ -9,6 +9,7 @@ class ircnukes(nukes.game):
 				"suicide" : self.__suicide,
 				"flip" : self.__flip,
 				"use" : self.__use,
+				"status" : self.__status,
 				"done" : self.__done,
 		}
 		self.__pcmd = {"hand" : self.__get_hand,
@@ -17,8 +18,9 @@ class ircnukes(nukes.game):
 				"push" : self.__push_card}
 		nukes.game.__init__(self, chan)
 
-	def pass_control(self, p, retaliate=False):
-		if retaliate == False:
+	def pass_control(self, p):
+		assert p.state != nukes.PLAYER_STATE_DEAD
+		if p.state == nukes.PLAYER_STATE_ALIVE:
 			self.game_msg("%s it's your go!"%p.name)
 			return
 		self.game_msg("%s, it's time for final retaliation!"%p.name)
@@ -125,6 +127,20 @@ class ircnukes(nukes.game):
 	def __done(self, p, cmd='', arg=[]):
 		"Finish your retaliation"
 		self.next_turn()
+
+	def __status(self, p, cmd='', arg=[]):
+		str = {nukes.PLAYER_STATE_ALIVE:"alive",
+			nukes.PLAYER_STATE_RETALIATE:"retaliating",
+			nukes.PLAYER_STATE_DEAD:"dead"}
+
+		if len(arg) >= 1:
+			arr = [self.get_player(arg[0])]
+		else:
+			arr = self.get_players()
+		for x in arr:
+			self.game_msg("%s: %s%s"%(x.name, str[x.state],
+				x.weapon != None and ": %r"%x.weapon or ''))
+		return
 
 	def irc_cmd(self, nick, cmd, args):
 		cmd.lower()

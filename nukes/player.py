@@ -13,6 +13,7 @@ class player:
 		self.card_stack = []
 		self.weapon = None
 		self.game = None
+		self.state = PLAYER_STATE_ALIVE
 		return
 	
 	def __str__(self):
@@ -42,9 +43,9 @@ class player:
 		if self.game.cur != self:
 			raise IllegalMoveError(self.game, self,
 						"Not your turn")
-		if self.population != 0:
+		if self.state != PLAYER_STATE_RETALIATE:
 			raise IllegalMoveError(self.game, self,
-					"It's not final retaliation yet!")
+					"It's not final retaliation!")
 
 		try:
 			c = self.__card_by_idx(int(arg))
@@ -89,6 +90,9 @@ class player:
 
 		if len(self.card_stack) == CARD_STACK_LEN:
 			raise IllegalMoveError(self.game, self, "Queue Full")
+		if self.state != PLAYER_STATE_ALIVE:
+			raise IllegalMoveError(self.game, self,
+						"Cannot queue cards when dead")
 
 		try:
 			c = self.__card_by_idx(int(arg))

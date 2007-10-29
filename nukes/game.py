@@ -19,31 +19,30 @@ class game:
 		self.__players = {}
 		self.__turn = []
 		self.cur = None
-		self.__corpses = {}
 
+		# Population the population cards...heh
 		self.__popcards.add_card(100, int, [5])
 		self.__popcards.add_card(50, int, [10])
 		self.__popcards.add_card(25, int, [15])
 		self.__popcards.add_card(10, int, [25])
 		self.__popcards.add_card(5, int, [50])
 
+		# Now for the main deck...
 		self.__deck.add_card(1, warhead, [NUKE_YIELD_100MT])
 		self.__deck.add_card(4, warhead, [NUKE_YIELD_50MT])
 		self.__deck.add_card(10, warhead, [NUKE_YIELD_20MT])
 		self.__deck.add_card(19, warhead, [NUKE_YIELD_10MT])
-
 		self.__deck.add_card(3, missile, [NUKE_YIELD_100MT, "saturn"])
 		self.__deck.add_card(9, missile, [NUKE_YIELD_20MT, "atlas"])
 		self.__deck.add_card(9, missile, [NUKE_YIELD_10MT, "polaris"])
-
-		# b70
 		self.__deck.add_card(6, bomber, [NUKE_YIELD_50MT, "b70"])
-
 		self.__deck.add_card(2, propaganda, [20])
 		self.__deck.add_card(6, propaganda, [10])
 		self.__deck.add_card(12, propaganda, [5])
 
-		print "Game init: %s (%u cards in deck)"%(self.__name,
+		# Don't print anything if it's an unnamed game...
+		if self.__name != None:
+			print "Game init: %s (%u cards in deck)"%(self.__name,
 				len(self.__deck))
 
 	def __str__(self):
@@ -54,7 +53,7 @@ class game:
 	# [ Override these methods to do useful things
 	def demilitarize(self):
 		raise Exception("NotReached")
-	def pass_control(self, p, retaliation=False):
+	def pass_control(self, p):
 		raise Exception("NotReached")
 	def player_dead(self, p):
 		p.hand.extend(p.card_stack)
@@ -70,37 +69,32 @@ class game:
 	def get_player(self, name):
 		if self.__players.has_key(name):
 			return self.__players[name]
-		if self.__corpses.has_key(name):
-			return self.__corpses[name]
 		raise GameLogicError(self, "No such player: %s"%name)
 	
 	def rename_player(self, p, new_name):
-		if self.__players.has_key(new_name) or \
-			self.__corpses.has_key(new_name):
+		if self.__players.has_key(new_name):
 			raise GameLogicError(self,
 				"Already a player %s"%new_name)
 
 		self.__players[new_name] = p
-		if self.__players.has_key(p.name):
-			del self.__players[p.name]
-		if self.__corpses.has_key(p.name):
-			del self.__corpses[p.name]
+		del self.__players[p.name]
 		p.name = new_name
 
 	def kill_player(self, p):
-		if self.__corpses.has_key(p.name):
+		if self.__state == GAME_STATE_INIT:
+			if self.__players.has_key(p.name):
+				del self.__players[p.name]
 			return
-		if not self.__players.has_key(p.name):
+		if p.state != PLAYER_STATE_ALIVE:
 			return
 
-		del self.__players[p.name]
+		if self.__turn.count(p):
+			self.__turn.remove(p)
 
 		if self.__state == GAME_STATE_WAR:
-			self.__corpses[p.name] = p
-			if self.__turn.count(p):
-				self.__turn.remove(p)
-			p.population = 0
-
+			p.state = PLAYER_STATE_RETALIATE
+		else:
+			p.state = PLAYER_STATE_DEAD
 		self.player_dead(p)
 
 	def state(self):
@@ -119,7 +113,7 @@ class game:
 			self.game_msg("%s: WAR DECLARED"%self.__name)
 		else:
 			self.game_msg("%s: PEACE"%self.__name)
-			for p in self.__players.values():
+			for p in self.__alive():
 				p.hand.extend(p.card_stack)
 				p.card_stack = []
 				p.card_stack = []
@@ -183,6 +177,18 @@ class game:
 		self.game_msg("Game started")
 		self.next_turn()
 
+	def __retaliate(self):
+		arr = filter(lambda x:x.state == PLAYER_STATE_RETALIATE,
+				self.__players.values())
+		return arr
+
+	def __alive(self):
+		arr = filter(lambda x:x.state == PLAYER_STATE_ALIVE,
+				self.__players.values())
+		return arr
+
+	def get_players(self):
+		return self.__players.values()
 
 	def next_turn(self):
 		"Play a single turn of the game"
@@ -191,32 +197,34 @@ class game:
 			self.__state == GAME_STATE_INIT:
 			raise GameLogicError(self, "Game not in progress")
 
-		if self.cur and self.__corpses.has_key(self.cur.name):
-			del self.__corpses[self.cur.name]
+		if self.cur and self.cur.state == PLAYER_STATE_RETALIATE:
+			self.cur.state = PLAYER_STATE_DEAD
 
-		while len(self.__corpses):
-			self.cur = self.__corpses.values()[0]
+		# Handle outstanding retaliations
+		while len(self.__retaliate()):
+			self.cur = self.__retaliate()[0]
 
-			# Do retaliation if we die in war time
-			if len(self.__players):
-				self.pass_control(self.cur, retaliate=True)
+			if len(self.__alive()):
+				self.pass_control(self.cur)
 				return
 			else:
-				del self.__corpses[self.cur.name]
+				self.cur.state = PLAYER_STATE_DEAD
+				break
 
-		if len(self.__players) == 0:
+		# Check for game over conditions
+		if len(self.__alive()) == 0:
 			raise GameOverMan(self)
-		elif len(self.__players) == 1:
+		elif len(self.__alive()) == 1:
 			raise GameOverMan(self,
-				self.__players.values()[0])
+				self.__alive()[0])
 
 		# After retaliations return to peace
-		if self.cur != None and self.cur.population == 0:
+		if self.cur != None and self.cur.state == PLAYER_STATE_DEAD:
 			self.transition(GAME_STATE_PEACE)
 
 		# Re-start turn sequence
 		if len(self.__turn) == 0:
-			self.__turn = self.__players.values()
+			self.__turn = self.__alive()
 
 		# Figure out who's turn it is
 		self.cur = self.__turn.pop(0)
