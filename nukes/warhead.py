@@ -54,7 +54,10 @@ class warhead(card):
 			g.game_msg(" > Hit nuclear stockpile, triple yield")
 			b = b * 3
 			if self.megatons == NUKE_YIELD_100MT:
-				raise GameOverMan(tgt.game)
+				g.game_msg(" > %s, you blew up the world, "
+					"it's your job to tidy the mess!"%
+						g.cur.name)
+				g.apocalypse()
 		elif r < 12:
 			g.game_msg(" > Hit nuclear power plant, double yield")
 			g.game_msg(" > %s misses a turn!"%tgt.name)

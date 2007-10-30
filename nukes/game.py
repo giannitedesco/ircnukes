@@ -174,6 +174,11 @@ class game:
 		self.__state = GAME_STATE_PEACE
 		self.game_msg("Game started")
 		self.next_turn()
+	
+	def apocalypse(self):
+		for p in self.__players.values():
+			p.state = PLAYER_STATE_DEAD
+		raise GameOverMan(self)
 
 	def __retaliate(self):
 		arr = filter(lambda x:x.state == PLAYER_STATE_RETALIATE,
