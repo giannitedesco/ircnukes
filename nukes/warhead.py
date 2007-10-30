@@ -83,4 +83,3 @@ class warhead(card):
 			return
 
 		p.weapon.use_warhead(self, g, p, tgt)
-		card.dequeue(self, g, p, tgt)

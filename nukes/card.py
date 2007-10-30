@@ -18,10 +18,4 @@ class card:
 	def dequeue(self, g, p, tgt = None):
 		"Dequeue a card from the deck, optionally aiming " \
 		"it at a target player"
-
-		#if tgt != None:
-		#	if tgt.population == 0:
-		#		g.kill_player(tgt)
-		#if p.population == 0:
-		#	g.kill_player(p)
 		return

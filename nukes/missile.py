@@ -44,4 +44,3 @@ class missile(card):
 	def dequeue(self, g, p, tgt = None):
 		p.weapon = self
 		g.game_msg(" > %s deploys missile %s"%(p.name, self))
-		card.dequeue(self, g, p, tgt)
