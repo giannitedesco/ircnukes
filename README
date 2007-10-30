@@ -9,7 +9,6 @@ brutality set in the current, possibly terminal, era of human existence
 
 TODO:
  o nukebot tidy ups
-   o handle "disconnect" message to re-connect
    o command line args for nukebot
    o logrotate the game logs
    o name2path / path2name

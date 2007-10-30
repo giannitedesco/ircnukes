@@ -229,7 +229,7 @@ class game:
 			self.cur = self.__turn.pop(0)
 			if self.cur.missturns:
 				self.cur.missturns = self.cur.missturns - 1
-				self.game_msg("%s: Miss a turn", self.cur.name)
+				self.game_msg("%s: Miss a turn"%self.cur.name)
 				continue
 			self.pass_control(self.cur)
 			break
