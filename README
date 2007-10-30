@@ -8,17 +8,20 @@ brutality set in the current, possibly terminal, era of human existence
 ./nukage.py - test rig for irc bot
 
 TODO:
- o command line args for nukebot
+ o nukebot tidy ups
+   o handle "disconnect" message to re-connect
+   o command line args for nukebot
+   o logrotate the game logs
+   o name2path / path2name
+   o !savegame <name>
+   o !loadgame <name>
+   o !listgames
+   o how to auto-reconnect?
  o Disallow queueing before game
  o Blow up the world with triple yield 100MT warheads
  o Allow deterrents (priv command to transfer between deterrent/hand)
  o Implement interceptors
  o help <command> for detailed output
- o save/restore support for nukebot
-    o name2path / path2name
-    o !savegame <name>
-    o !restore <name>
-    o !listgames
  o Keep player stats (existing points system too maybe?)
  o Allow multiple chans
  o Spies

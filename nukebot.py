@@ -9,6 +9,7 @@ svr = ('irc.quakenet.eu.org', 6667)
 chan = '#nukes'
 game = None
 log = None
+irc = irclib.IRC()
 
 def cmd_priv(conn, nick, cmd):
 	global chan
@@ -144,6 +145,7 @@ def get_gamelist(limit):
 	return list[:limit]
 
 def irc_msg_umode(conn, ev):
+	print "Connected: joinging %s"%chan
 	conn.join(chan)
 
 def irc_msg_join(conn, ev):
@@ -151,15 +153,21 @@ def irc_msg_join(conn, ev):
 		return
 	conn.privmsg(ev.target(), "Would you like to play a game?")
 
+def irc_disconnect(conn, ev):
+	print "Disconnected: (%s) Reconnecting in 15..."%ev.arguments()[0]
+	time.sleep(15)
+	s = irc.server()
+	s.connect(svr[0], svr[1], nick, ircname=name, username=name)
+
 if __name__ == "__main__":
 	#irclib.DEBUG = True
-	irc = irclib.IRC()
 	irc.add_global_handler('umode', irc_msg_umode)
 	irc.add_global_handler('join', irc_msg_join)
 	irc.add_global_handler('privmsg', irc_msg_priv)
 	irc.add_global_handler('pubmsg', irc_msg_pub)
 	irc.add_global_handler('action', irc_msg_action)
 	irc.add_global_handler('nick', irc_msg_nick)
+	irc.add_global_handler('disconnect', irc_disconnect)
 
 
 	s = irc.server()
