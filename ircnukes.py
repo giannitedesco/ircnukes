@@ -133,13 +133,21 @@ class ircnukes(nukes.game):
 			nukes.PLAYER_STATE_RETALIATE:"retaliating",
 			nukes.PLAYER_STATE_DEAD:"dead"}
 
+		if self.state() == nukes.GAME_STATE_PEACE:
+			self.game_msg("Peace time:")
+		elif self.state() == nukes.GAME_STATE_WAR:
+			self.game_msg("War time:")
+		else:
+			self.game_msg("Game status:")
+
 		if len(arg) >= 1:
-			arr = [self.get_player(arg[0])]
+			arr = map(self.get_player, arg)
 		else:
 			arr = self.get_players()
 		for x in arr:
-			self.game_msg("%s: %s%s"%(x.name, str[x.state],
-				x.weapon != None and ": %r"%x.weapon or ''))
+			self.game_msg(" > %s: %s%s%s"%(x.name, str[x.state],
+				x.weapon != None and ": %r"%x.weapon or "",
+				self.cur == x and " (*)" or ""))
 		return
 
 	def irc_cmd(self, nick, cmd, args):
