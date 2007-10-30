@@ -47,7 +47,7 @@ class game:
 
 	def __str__(self):
 		return "game(%s)"%self.__name
-	def __str__(self):
+	def __repr__(self):
 		return "game(%s)"%self.__name
 
 	# [ Override these methods to do useful things

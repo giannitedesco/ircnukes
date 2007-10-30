@@ -17,7 +17,6 @@ TODO:
    o !listgames
    o how to auto-reconnect?
  o Disallow queueing before game
- o Blow up the world with triple yield 100MT warheads
  o Allow deterrents (priv command to transfer between deterrent/hand)
  o Implement interceptors
  o help <command> for detailed output
