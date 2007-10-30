@@ -73,6 +73,7 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 			random.seed(randomseed)
 			log = open("nukebot.log", "w")
 			log.write("randomseed %u\n"%randomseed)
+			log.write("chan %s creategame\n"%chan)
 			log.flush()
 		return
 	elif arg[0] == "help":
