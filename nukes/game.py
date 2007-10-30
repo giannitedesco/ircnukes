@@ -56,8 +56,7 @@ class game:
 	def pass_control(self, p):
 		raise Exception("NotReached")
 	def player_dead(self, p):
-		p.hand.extend(p.card_stack)
-		p.card_stack = []
+		p.cards_to_hand()
 		if self.cur == p:
 			self.next_turn()
 	def player_msg(self, player, msg):
@@ -115,9 +114,7 @@ class game:
 		else:
 			self.game_msg("%s: PEACE"%self.__name)
 			for p in self.__alive():
-				p.hand.extend(p.card_stack)
-				p.card_stack = []
-				p.card_stack = []
+				p.cards_to_hand()
 			self.demilitarize()
 			# FIXME: players can change queue now
 

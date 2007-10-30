@@ -23,6 +23,15 @@ class player:
 	def __repr__(self):
 		return "player('%s')"%self.name
 
+	def cards_to_hand(self):
+		"Move all cards back in to the hand"
+
+		self.hand.extend(self.card_stack)
+		self.card_stack = []
+		if self.weapon != None:
+			self.hand.append(self.weapon)
+			self.weapon = None
+
 	def flip_card(self, tgt):
 		if self.game.cur != self:
 			raise IllegalMoveError(self.game, self,
