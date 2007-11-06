@@ -62,7 +62,11 @@ class player:
 		except ValueError:
 			c = self.__card_by_name(arg)
 
-		c.dequeue(self.game, self, tgt)
+		try:
+			c.dequeue(self.game, self, tgt)
+		except:
+			self.hand.append(c)
+			raise
 
 	def pwn(self, pwnage):
 		"Decrement population"
