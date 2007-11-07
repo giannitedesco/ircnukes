@@ -11,14 +11,19 @@ game = None
 log = None
 irc = irclib.IRC()
 
+def log_line(str):
+	global log
+	if log == None:
+		return
+	log.write(str + "\n")
+	log.flush()
+
 def cmd_priv(conn, nick, cmd):
 	global chan
 	global game
 	global log
 
-	if log != None:
-		log.write("priv %s %s\n"%(nick, cmd))
-		log.flush()
+	log_line("priv %s %s"%(nick, cmd))
 
 	arg = cmd.split()
 	if not len(arg):
@@ -58,9 +63,7 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 	global game
 	global log
 
-	if log != None:
-		log.write("chan %s %s\n"%(nick, cmd))
-		log.flush()
+	log_line("chan %s %s"%(nick, cmd))
 
 	arg = cmd.split()
 	if not len(arg):
@@ -73,8 +76,8 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 			randomseed = int(time.time())
 			random.seed(randomseed)
 			log = open("nukebot.log", "w")
-			log.write("randomseed %u\n"%randomseed)
-			log.write("chan %s creategame\n"%chan)
+			log_line("randomseed %u"%randomseed)
+			log_line("chan %s creategame"%chan)
 			log.flush()
 		return
 	elif arg[0] == "help":
@@ -107,6 +110,48 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 			conn.privmsg(chan, "%s: %s"%(e.player, e.desc))
 	return
 
+def cmd_nick(conn, nick, new):
+	global game
+	if game == None:
+		return
+
+	log_line("nick %s %s"%(nick, new))
+
+	try:
+		game.rename_player(game.get_player(nick), new)
+	except nukes.GameLogicError, e:
+		print e.desc
+		return
+
+def cmd_quit(conn, nick):
+	global game
+	if game == None:
+		return
+
+	log_line("quit %s"%nick)
+
+	try:
+		p = game.get_player(nick)
+	except nukes.GameLogicError, e:
+		print e.desc
+		return
+
+	game.kill_player(p, delete=True)
+
+def cmd_kick(conn, kicker, nick):
+	global game
+	if game == None:
+		return
+	log_line("kick %s %s"%(kicker, nick))
+
+def cmd_part(conn, nick):
+	if game == None:
+		return
+	log_line("part %s"%nick)
+
+def cmd_join(conn, nick):
+	log_line("join %s"%nick)
+
 def get_nick(str):
 	return str.split('!')[0]
 
@@ -129,29 +174,32 @@ def irc_msg_action(conn, ev):
 				get_nick(ev.source()),
 				ev.arguments()[0])
 
-def irc_msg_nick(conn, ev):
-	global game
-	print "%s is now known as %s"%(get_nick(ev.source()), ev.target())
-	try:
-		game.rename_player(game.get_player(get_nick(ev.source())),
-					ev.target())
-	except nukes.GameLogicError:
-		return
+def irc_msg_quit(conn, ev):
+	print "%s quit (%s)"%(get_nick(ev.source()), ev.arguments()[0])
+	cmd_quit(conn, get_nick(ev.source()))
 
-def get_gamelist(limit):
-	list = os.listdir(".")
-	list = filter((lambda x: os.path.isfile(x) and x[:8] == 'nukebot-' and x[-4:] == '.log'), list)
-	list.sort()
-	return list[:limit]
+def irc_msg_kick(conn, ev):
+	print "kick: %s %s %s"%(get_nick(ev.source()), \
+				ev.target(), ev.arguments()[0])
+	cmd_kick(conn, get_nick(ev.source()), ev.target())
+
+def irc_msg_part(conn, ev):
+	print "%s left %s (%s)"%(get_nick(ev.source()), \
+				ev.target(), ev.arguments()[0])
+	cmd_part(conn, get_nick(ev.source()))
+
+def irc_msg_nick(conn, ev):
+
+	print "%s is now known as %s"%(get_nick(ev.source()), ev.target())
+
+def irc_msg_join(conn, ev):
+	if get_nick(ev.source()) != conn.get_nickname():
+		cmd_join(conn, get_nick(ev.source()))
+	conn.privmsg(ev.target(), "Would you like to play a game?")
 
 def irc_msg_umode(conn, ev):
 	print "Connected: joinging %s"%chan
 	conn.join(chan)
-
-def irc_msg_join(conn, ev):
-	if get_nick(ev.source()) != conn.get_nickname():
-		return
-	conn.privmsg(ev.target(), "Would you like to play a game?")
 
 def irc_disconnect(conn, ev):
 	print "Disconnected: (%s) Reconnecting in 15..."%ev.arguments()[0]
@@ -167,6 +215,9 @@ if __name__ == "__main__":
 	irc.add_global_handler('pubmsg', irc_msg_pub)
 	irc.add_global_handler('action', irc_msg_action)
 	irc.add_global_handler('nick', irc_msg_nick)
+	irc.add_global_handler('quit', irc_msg_quit);
+	irc.add_global_handler('kick', irc_msg_kick);
+	irc.add_global_handler('part', irc_msg_part);
 	irc.add_global_handler('disconnect', irc_disconnect)
 
 

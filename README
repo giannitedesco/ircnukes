@@ -8,21 +8,28 @@ brutality set in the current, possibly terminal, era of human existence
 ./nukage.py - test rig for irc bot
 
 TODO:
- o nukebot tidy ups
+ o python code documentation
+ o polish up irc code
+   o give disconnected users a chance to reconnect before their next turn
+   o !votekick
+   o help <command> for detailed output
    o command line args for nukebot
    o logrotate the game logs
    o name2path / path2name
    o !savegame <name>
-   o !loadgame <name>
+   o end the game if the bot disconnects (autosave)
+   o !loadgame <name> (put fake_conn in seperate module to prevent cycles)
+   o loadgame needs a way to reassociate nicks that may have changed
    o !listgames
-   o how to auto-reconnect?
- o Disallow queueing before game
+ o Disallow queueing cards before !start
  o Allow deterrents (priv command to transfer between deterrent/hand)
  o Implement interceptors
- o help <command> for detailed output
- o Keep player stats (existing points system too maybe?)
- o Allow multiple chans
+ o Keep player stats (pld/win/lost/amusing ircstats type stuff)
+   o export to HTML
+ o New weapons
+   o stealth bomber
+   o space platform
+   o atomic cannons
  o Spies
  o Secrets
  o Other special rules + cards?
- o Website / Code documentation / User FAQ

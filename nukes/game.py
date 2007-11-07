@@ -79,10 +79,11 @@ class game:
 		del self.__players[p.name]
 		p.name = new_name
 
-	def kill_player(self, p):
+	def kill_player(self, p, delete=False):
 		if p.state != PLAYER_STATE_ALIVE:
 			return
 		if self.__state == GAME_STATE_INIT:
+			p.state = PLAYER_STATE_DEAD
 			if self.__players.has_key(p.name):
 				del self.__players[p.name]
 			self.player_dead(p)
@@ -91,7 +92,7 @@ class game:
 		if self.__turn.count(p):
 			self.__turn.remove(p)
 
-		if self.__state == GAME_STATE_WAR:
+		if self.__state == GAME_STATE_WAR and delete == False:
 			p.state = PLAYER_STATE_RETALIATE
 		else:
 			p.state = PLAYER_STATE_DEAD

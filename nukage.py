@@ -4,7 +4,7 @@ from sys import stdin
 import random
 import nukes
 from ircnukes import ircnukes
-from nukebot import cmd_pub, cmd_priv
+from nukebot import cmd_pub, cmd_priv, cmd_nick, cmd_quit, cmd_kick, cmd_part
 
 class fake_conn:
         def privmsg(self, to, msg):
@@ -35,15 +35,30 @@ def testbed():
 				random.seed(int(arr[1]))
 				continue
 
-			if len(arr) < 3:
-				barf("Bad line: %s"%arr)
-
 			print "<<< %s"%str
 
 			if arr[0] == "chan":
+				if len(arr) < 3:
+					barf("Bad line: %s"%arr)
 				cmd_pub(conn, arr[1], chan, arr[2], logit=False)
 			elif arr[0] == "priv":
+				if len(arr) < 3:
+					barf("Bad line: %s"%arr)
 				cmd_priv(conn, arr[1], arr[2])
+			elif arr[0] == "nick":
+				if len(arr) < 3:
+					barf("Bad line: %s"%arr)
+				cmd_nick(conn, arr[1], arr[2])
+			elif arr[0] == "quit":
+				cmd_quit(conn, arr[1])
+			elif arr[0] == "kick":
+				if len(arr) < 3:
+					barf("Bad line: %s"%arr)
+				cmd_kick(conn, arr[1], arr[2])
+			elif arr[0] == "part":
+				cmd_part(conn, arr[1])
+			elif arr[0] == "join":
+				cmd_part(conn, arr[1])
 			else:
 				barf("Bad cmd: %s"%arr)
 	except KeyboardInterrupt:
