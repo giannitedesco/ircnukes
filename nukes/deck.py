@@ -1,7 +1,10 @@
 # Copyright (c) 2007 Gianni Tedesco
 # Released under the terms of the GNU GPL v2 or later
 #
-# Card base class
+# Simulate a never-ending deck of cards. We do this by emulating a
+# single deck. When all cards have been dealt, we simply replenish
+# the deck with the original set of cards. It generates cards as they
+# are dealt using the system PRNG for shuffling.
 
 from globals import *
 from random import randint
