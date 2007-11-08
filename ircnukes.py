@@ -1,21 +1,32 @@
 import nukes
 
 class ircnukes(nukes.game):
-	def __init__(self, conn, chan):
-		self.__chan = chan
-		self.__conn = conn
+	def save_prepare(self):
+		self.__nc = None
+		self.__cmd = None
+		self.__pcmd = None
+		self.__conn = None
+		self.__chan = None
+		self.dirty = False
+
+	def save_done(self, conn, chan):
 		self.__nc = {"joingame" : self.__joingame}
 		self.__cmd = {"start" : self.__startgame,
 				"suicide" : self.__suicide,
 				"flip" : self.__flip,
 				"use" : self.__use,
 				"status" : self.__status,
-				"done" : self.__done,
-		}
+				"done" : self.__done}
 		self.__pcmd = {"hand" : self.__get_hand,
 				"queue" : self.__get_queue,
 				"population" : self.__get_pop,
 				"push" : self.__push_card}
+		self.__conn = conn
+		self.__chan = chan
+		self.dirty = False
+
+	def __init__(self, conn, chan):
+		self.save_done(conn, chan)
 		nukes.game.__init__(self, chan)
 
 	def pass_control(self, p):
@@ -154,12 +165,14 @@ class ircnukes(nukes.game):
 		cmd.lower()
 
 		if self.__nc.has_key(cmd):
+			self.dirty = True
 			self.__nc[cmd](nick, cmd, args)
 			return
 
 		p = self.get_player(nick)
 
 		if self.__cmd.has_key(cmd):
+			self.dirty = True
 			self.__cmd[cmd](p, cmd, args)
 			return
 
@@ -169,6 +182,7 @@ class ircnukes(nukes.game):
 		p = self.get_player(nick)
 
 		if self.__pcmd.has_key(cmd):
+			self.dirty = True
 			self.__pcmd[cmd](p, cmd, args)
 			return
 

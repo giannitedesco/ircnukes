@@ -87,6 +87,8 @@ class game:
 			if self.__players.has_key(p.name):
 				del self.__players[p.name]
 			self.player_dead(p)
+			if len(self.__players) == 0:
+				raise GameOverMan(self)
 			return
 
 		if self.__turn.count(p):
