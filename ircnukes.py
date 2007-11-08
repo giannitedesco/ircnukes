@@ -146,6 +146,10 @@ class ircnukes(nukes.game):
 	
 	def __done(self, p, cmd='', arg=[]):
 		"Finish your retaliation"
+		if p != self.cur:
+			raise IllegalMoveError(self.game, self,
+						"Not your turn")
+
 		self.next_turn()
 		self.dirty = True
 
