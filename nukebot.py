@@ -236,12 +236,8 @@ def cmd_nick(conn, nick, new):
 		return
 
 	log_line("nick %s %s"%(nick, new))
-
-	try:
-		game.rename_player(game.get_player(nick), new)
-	except nukes.GameLogicError, e:
-		print e.desc
-		return
+	if game != None:
+		game.nick_change(nick, new)
 
 def cmd_quit(conn, nick):
 	global game
@@ -270,6 +266,8 @@ def cmd_part(conn, nick):
 	log_line("part %s"%nick)
 
 def cmd_join(conn, nick):
+	if game == None:
+		return
 	log_line("join %s"%nick)
 
 def get_nick(str):
@@ -312,8 +310,7 @@ def irc_msg_part(conn, ev):
 def irc_msg_nick(conn, ev):
 
 	print "%s is now known as %s"%(get_nick(ev.source()), ev.target())
-	if game != None:
-		game.nick_change(get_nick(ev.source()), ev.target())
+	cmd_nick(get_nick(ev.source()), ev.target())
 
 def irc_msg_join(conn, ev):
 	if get_nick(ev.source()) == conn.get_nickname():
