@@ -38,14 +38,17 @@ class ircnukes(nukes.game):
 		self.game_msg("%s has: %s"%(p.name, p.hand))
 
 	def nick_change(self, old, new):
-		raise Exception("NotImplemented")
+		try:
+			p = self.get_player(old)
+			self.rename_player(p, new)
+			self.dirty = True
+		except GameLogicError, e:
+			self.game_msg("Error renaming %s to %s: %s"%(old,\
+					new, e.desc))
 
 	def add_player(self, p):
 		nukes.game.add_player(self, p)
 
-	def do_moves(self, p):
-		raise Exception("NotImplemented")
-	
 	def demilitarize(self):
 		self.game_msg("Peace time, re-create your queues!")
 	
@@ -91,15 +94,18 @@ class ircnukes(nukes.game):
 			return
 		c = p.queue_card(arg[0])
 		self.__get_queue(p)
+		self.dirty = True
 
 	# Channel commands
 	def __startgame(self, p, cmd='', arg=[]):
 		"Start a new game in the current channel"
 		self.commence()
+		self.dirty = True
 
 	def __suicide(self, p, cmd='', arg=[]):
 		"Leave a game at any time"
 		self.kill_player(p)
+		self.dirty = True
 
 	def __joingame(self, nick, cmd='', args=[]):
 		"Join a game that has been created with savegame"
@@ -110,6 +116,7 @@ class ircnukes(nukes.game):
 		self.__get_pop(p)
 		self.__get_hand(p)
 		self.__get_queue(p)
+		self.dirty = True
 
 	def __flip(self, p, cmd='', arg=[]):
 		"Flip the first card in your queue when it's your turn"
@@ -124,6 +131,7 @@ class ircnukes(nukes.game):
 		p.hand.append(self.deal_card())
 		self.__get_hand(p)
 		self.next_turn()
+		self.dirty = True
 
 	def __use(self, p, cmd='', arg=[]):
 		"Flip any card in your hand during final retaliation"
@@ -134,10 +142,12 @@ class ircnukes(nukes.game):
 		else:
 			tgt = None
 		p.use_card(arg[0], tgt)
+		self.dirty = True
 	
 	def __done(self, p, cmd='', arg=[]):
 		"Finish your retaliation"
 		self.next_turn()
+		self.dirty = True
 
 	def __status(self, nick, cmd='', arg=[]):
 		str = {nukes.PLAYER_STATE_ALIVE:"alive",
@@ -165,14 +175,12 @@ class ircnukes(nukes.game):
 		cmd.lower()
 
 		if self.__nc.has_key(cmd):
-			self.dirty = True
 			self.__nc[cmd](nick, cmd, args)
 			return
 
 		p = self.get_player(nick)
 
 		if self.__cmd.has_key(cmd):
-			self.dirty = True
 			self.__cmd[cmd](p, cmd, args)
 			return
 
@@ -182,7 +190,6 @@ class ircnukes(nukes.game):
 		p = self.get_player(nick)
 
 		if self.__pcmd.has_key(cmd):
-			self.dirty = True
 			self.__pcmd[cmd](p, cmd, args)
 			return
 

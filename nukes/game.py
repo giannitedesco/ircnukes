@@ -84,9 +84,9 @@ class game:
 			return
 		if self.__state == GAME_STATE_INIT:
 			p.state = PLAYER_STATE_DEAD
+			p.cards_to_hand()
 			if self.__players.has_key(p.name):
 				del self.__players[p.name]
-			self.player_dead(p)
 			if len(self.__players) == 0:
 				raise GameOverMan(self)
 			return

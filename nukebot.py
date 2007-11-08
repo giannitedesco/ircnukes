@@ -312,6 +312,8 @@ def irc_msg_part(conn, ev):
 def irc_msg_nick(conn, ev):
 
 	print "%s is now known as %s"%(get_nick(ev.source()), ev.target())
+	if game != None:
+		game.nick_change(get_nick(ev.source()), ev.target())
 
 def irc_msg_join(conn, ev):
 	if get_nick(ev.source()) == conn.get_nickname():
