@@ -16,6 +16,7 @@ TODO:
      o use idents and hosts?
      o register account with bot?
    o give disconnected users a chance to reconnect before their next turn
+   o handle player parting/kicked from game channel
    o command line args for nukebot
    o help <command> for detailed output
  o Disallow queueing cards before !start

@@ -23,14 +23,20 @@ class IllegalMoveError(Exception):
 		self.game = g
 		self.player = p
 		self.desc = desc
+		self.message = desc
 
 class GameLogicError(Exception):
 	def __init__(self, g, desc, player=None):
 		self.game = g
-		self.desc = desc
 		self.player = player
+		self.desc = desc
+		self.message = desc
 
 class GameOverMan(Exception):
 	def __init__(self, g, winner=None):
 		self.game = g
 		self.winner = winner
+		if self.winner != None:
+			self.message = "Game over: winner %s"%winner.name
+		else:
+			self.message = "Game over"
