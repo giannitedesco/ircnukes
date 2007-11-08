@@ -74,7 +74,10 @@ class deck:
 			ln = ln.split()
 			if len(ln) < 2:
 				raise Exception("Bad line: %s"%ln)
-			maxcnt = int(ln[0])
+			try:
+				maxcnt = int(ln[0])
+			except:
+				raise Exception("%s not an integer"%ln[0])
 			if not clsmap.has_key(ln[1]):
 				raise Exception("No such card: %s"%ln[1])
 			cls = clsmap[ln[1]]
