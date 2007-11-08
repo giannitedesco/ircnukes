@@ -136,7 +136,7 @@ class ircnukes(nukes.game):
 	def __use(self, p, cmd='', arg=[]):
 		"Flip any card in your hand during final retaliation"
 		if len(arg) < 1:
-			raise IllegalMoveError(self, p, "No card specified")
+			raise nukes.IllegalMoveError(self, p, "No card specified")
 		if len(arg) >= 2:
 			tgt = self.get_player(arg[1])
 		else:
@@ -147,7 +147,7 @@ class ircnukes(nukes.game):
 	def __done(self, p, cmd='', arg=[]):
 		"Finish your retaliation"
 		if p != self.cur:
-			raise IllegalMoveError(self.game, self,
+			raise nukes.IllegalMoveError(self, p,
 						"Not your turn")
 
 		self.next_turn()
