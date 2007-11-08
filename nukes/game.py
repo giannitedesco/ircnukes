@@ -89,6 +89,7 @@ class game:
 			p.state = PLAYER_STATE_DEAD
 			p.cards_to_hand()
 			if self.__players.has_key(p.name):
+				self.player_dead(p)
 				del self.__players[p.name]
 			if len(self.__players) == 0:
 				raise GameOverMan(self)
