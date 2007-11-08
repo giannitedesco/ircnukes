@@ -314,10 +314,11 @@ def irc_msg_nick(conn, ev):
 	print "%s is now known as %s"%(get_nick(ev.source()), ev.target())
 
 def irc_msg_join(conn, ev):
-	if get_nick(ev.source()) != conn.get_nickname():
-		cmd_join(conn, get_nick(ev.source()))
-	print "Joined: %s"%chan
-	conn.privmsg(ev.target(), "Would you like to play a game?")
+	if get_nick(ev.source()) == conn.get_nickname():
+		print "Joined: %s"%ev.target()
+		conn.privmsg(ev.target(), "Would you like to play a game?")
+		return
+	cmd_join(conn, get_nick(ev.source()))
 
 def irc_msg_umode(conn, ev):
 	print "Connected: joining %s"%chan
