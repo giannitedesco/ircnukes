@@ -49,8 +49,7 @@ class deck:
 			i = i + c.cnt
 			if r < i:
 				c.cnt = c.cnt - 1
-				ret = c.cls(*c.args)
-				return ret
+				return c.cls(*c.args)
 
 	def add_card(self, maxcnt, cls, args):
 		self.__cards.append(deck_card(maxcnt, cls, args))
