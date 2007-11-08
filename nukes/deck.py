@@ -54,3 +54,29 @@ class deck:
 
 	def add_card(self, maxcnt, cls, args):
 		self.__cards.append(deck_card(maxcnt, cls, args))
+
+	def __do_args(self, item):
+		try:
+			return int(item)
+		except:
+			return item
+
+	def load_file(self, f, clsmap):
+		while True:
+			ln = f.readline()
+			if ln == '':
+				break
+			ln = ln[:-1]
+			if ln == '':
+				continue
+			if ln[0] == '#':
+				continue
+			ln = ln.split()
+			if len(ln) < 2:
+				raise Exception("Bad line: %s"%ln)
+			maxcnt = int(ln[0])
+			if not clsmap.has_key(ln[1]):
+				raise Exception("No such card: %s"%ln[1])
+			cls = clsmap[ln[1]]
+			args = map(self.__do_args, ln[2:])
+			self.add_card(maxcnt, cls, args)

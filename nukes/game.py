@@ -11,7 +11,7 @@ from deck import deck
 
 class game:
 	"Basic game logic and state machine"
-	def __init__(self, name="nukes"):
+	def __init__(self, name = "nukes", deckfile = None):
 		self.__name = name
 		self.__state = GAME_STATE_INIT
 		self.__popcards = deck("population")
@@ -27,23 +27,23 @@ class game:
 		self.__popcards.add_card(10, int, [25])
 		self.__popcards.add_card(5, int, [50])
 
+		if deckfile == None:
+			return
+
 		# Now for the main deck...
-		self.__deck.add_card(1, warhead, [NUKE_YIELD_100MT])
-		self.__deck.add_card(4, warhead, [NUKE_YIELD_50MT])
-		self.__deck.add_card(10, warhead, [NUKE_YIELD_20MT])
-		self.__deck.add_card(19, warhead, [NUKE_YIELD_10MT])
-		self.__deck.add_card(3, missile, [NUKE_YIELD_100MT, "saturn"])
-		self.__deck.add_card(9, missile, [NUKE_YIELD_20MT, "atlas"])
-		self.__deck.add_card(9, missile, [NUKE_YIELD_10MT, "polaris"])
-		self.__deck.add_card(6, bomber, [NUKE_YIELD_50MT, "b70"])
-		self.__deck.add_card(2, propaganda, [20])
-		self.__deck.add_card(6, propaganda, [10])
-		self.__deck.add_card(12, propaganda, [5])
+		try:
+			self.__deck.load_file(
+				open(deckfile, 'r'),
+				{"warhead":warhead,
+				"missile":missile,
+				"bomber":bomber,
+				"propaganda":propaganda})
+		except Exception, e:
+			raise GameLogicError(self, (e.strerror == None) and e.message or e.strerror)
 
 		# Don't print anything if it's an unnamed game...
-		if self.__name != None:
-			print "Game init: %s (%u cards in deck)"%(self.__name,
-				len(self.__deck))
+		print "Game init: %s (got %u cards from deck %s)"%(self.__name,
+			len(self.__deck), deckfile)
 
 	def __str__(self):
 		return "game(%s)"%self.__name

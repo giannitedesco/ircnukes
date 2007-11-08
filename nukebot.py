@@ -10,6 +10,7 @@ name = 'ircnukes'
 svr = ('irc.b0rk.co.uk', 6667)
 chan = '#nukes'
 logdir = './saved-games'
+deck = './decks/original.deck'
 game = None
 okhash = None
 log = None
@@ -163,6 +164,7 @@ def cmd_priv(conn, nick, cmd):
 def cmd_pub(conn, nick, chan, cmd, logit=True):
 	global game
 	global log
+	global deck
 
 	log_line("chan %s %s"%(nick, cmd))
 
@@ -171,7 +173,11 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 		return
 
 	if arg[0] == "creategame":
-		game = ircnukes(conn, chan)
+		try:
+			game = ircnukes(conn, chan, deck)
+		except nukes.GameLogicError, e:
+			conn.privmsg(chan, "error: %s: %s"%(deck, e.desc))
+			return
 		conn.privmsg(chan, "Game started: %s"%game)
 		if logit == True:
 			randomseed = int(time.time())

@@ -25,9 +25,9 @@ class ircnukes(nukes.game):
 		self.__chan = chan
 		self.dirty = False
 
-	def __init__(self, conn, chan):
+	def __init__(self, conn, chan, deck=None):
 		self.save_done(conn, chan)
-		nukes.game.__init__(self, chan)
+		nukes.game.__init__(self, chan, deck)
 
 	def pass_control(self, p):
 		assert p.state != nukes.PLAYER_STATE_DEAD
