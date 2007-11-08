@@ -38,8 +38,11 @@ class game:
 				"missile":missile,
 				"bomber":bomber,
 				"propaganda":propaganda})
+		except IOError, e:
+			raise GameLogicError(self, (e.strerror == None) \
+				and e.message or e.strerror)
 		except Exception, e:
-			raise GameLogicError(self, (e.strerror == None) and e.message or e.strerror)
+			raise GameLogicError(self, e.message)
 
 		# Don't print anything if it's an unnamed game...
 		print "Game init: %s (got %u cards from deck %s)"%(self.__name,

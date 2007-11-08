@@ -10,9 +10,13 @@ from globals import *
 class warhead(card):
 	def __init__(self, megatons=NUKE_YIELD_10MT):
 		self.__bodycounts = {NUKE_YIELD_10MT : 2,
+					NUKE_YIELD_15MT : 3,
 					NUKE_YIELD_20MT : 5,
+					NUKE_YIELD_40MT : 10,
 					NUKE_YIELD_50MT : 15,
-					NUKE_YIELD_100MT : 25}
+					NUKE_YIELD_75MT : 20,
+					NUKE_YIELD_100MT : 25,
+					NUKE_YIELD_200MT : 50}
 		if not self.__bodycounts.has_key(megatons):
 			raise Exception("BadNukeYield")
 		self.megatons = megatons
