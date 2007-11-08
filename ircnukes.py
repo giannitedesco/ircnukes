@@ -10,12 +10,12 @@ class ircnukes(nukes.game):
 		self.dirty = False
 
 	def save_done(self, conn, chan):
-		self.__nc = {"joingame" : self.__joingame}
+		self.__nc = {"joingame" : self.__joingame,
+				"status" : self.__status}
 		self.__cmd = {"start" : self.__startgame,
 				"suicide" : self.__suicide,
 				"flip" : self.__flip,
 				"use" : self.__use,
-				"status" : self.__status,
 				"done" : self.__done}
 		self.__pcmd = {"hand" : self.__get_hand,
 				"queue" : self.__get_queue,
@@ -139,7 +139,7 @@ class ircnukes(nukes.game):
 		"Finish your retaliation"
 		self.next_turn()
 
-	def __status(self, p, cmd='', arg=[]):
+	def __status(self, nick, cmd='', arg=[]):
 		str = {nukes.PLAYER_STATE_ALIVE:"alive",
 			nukes.PLAYER_STATE_RETALIATE:"retaliating",
 			nukes.PLAYER_STATE_DEAD:"dead"}
