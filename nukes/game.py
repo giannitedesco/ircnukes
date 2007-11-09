@@ -129,17 +129,6 @@ class game:
 		"Return a random population card"
 		return self.__popcards.deal_card()
 
-	def __randyield(self):
-		i = random.randint(0, 100)
-		if i < 5:
-			return NUKE_YIELD_100MT
-		elif i < 20:
-			return NUKE_YIELD_50MT
-		elif i < 50:
-			return NUKE_YIELD_20MT
-		else:
-			return NUKE_YIELD_10MT
-
 	def deal_card(self):
 		"Pick up a card from the top of the deck"
 		return self.__deck.deal_card()
