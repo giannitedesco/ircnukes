@@ -21,11 +21,11 @@ class game:
 		self.cur = None
 
 		# Population the population cards...heh
-		self.__popcards.add_card(100, int, [5])
-		self.__popcards.add_card(50, int, [10])
-		self.__popcards.add_card(25, int, [15])
-		self.__popcards.add_card(10, int, [25])
-		self.__popcards.add_card(5, int, [50])
+		self.__popcards.add_card(12, int, [1])
+		self.__popcards.add_card(10, int, [2])
+		self.__popcards.add_card(8, int, [5])
+		self.__popcards.add_card(6, int, [10])
+		self.__popcards.add_card(4, int, [25])
 
 		if deckfile == None:
 			return
@@ -58,6 +58,10 @@ class game:
 		raise Exception("NotReached")
 	def pass_control(self, p):
 		raise Exception("NotReached")
+	def player_msg(self, player, msg):
+		print " >> %s: %s"%(player, msg)
+	def game_msg(self, msg):
+		print " >> %s: %s"%(self, msg)
 	def player_dead(self, p):
 		filter(lambda x:(x == p) and False or True, self.__turn)
 
@@ -79,18 +83,15 @@ class game:
 			self.__state != GAME_STATE_INIT:
 			raise GameOverMan(self, self.__alive()[0])
 
-		# next persons turn
-		if self.__state != GAME_STATE_INIT:
-			if self.cur == p:
-				self.next_turn()
-		else:
+		if self.__state == GAME_STATE_INIT:
+			# player simply drops out of whole game
 			if self.__players.has_key(p.name):
 				del self.__players[p.name]
-
-	def player_msg(self, player, msg):
-		print " >> %s: %s"%(player, msg)
-	def game_msg(self, msg):
-		print " >> %s: %s"%(self, msg)
+		else:
+			# next persons turn, player stay dead so you
+			# can see them in game stats
+			if self.cur == p:
+				self.next_turn()
 	# ]
 
 	def get_player(self, name):
@@ -148,7 +149,7 @@ class game:
 			raise GameLogicError(self, "Duplicate player name")
 
 		# Deal population cards
-		for i in range(0, 5):
+		for i in range(0, 9):
 			p.population += self.__get_pop()
 
 		for i in range(0,9):
