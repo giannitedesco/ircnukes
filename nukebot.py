@@ -324,7 +324,7 @@ def irc_msg_part(conn, ev):
 def irc_msg_nick(conn, ev):
 
 	print "%s is now known as %s"%(get_nick(ev.source()), ev.target())
-	cmd_nick(get_nick(ev.source()), ev.target())
+	cmd_nick(conn, get_nick(ev.source()), ev.target())
 
 def irc_msg_join(conn, ev):
 	if get_nick(ev.source()) == conn.get_nickname():
