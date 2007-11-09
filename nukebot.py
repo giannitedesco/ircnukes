@@ -37,15 +37,17 @@ def ok_char(c):
 	
 def name2path(name):
 	"Convert a game-name to a saved-game path"
+
 	global logdir
 	name.lower()
 	str = filter(ok_char, name)
-	if len(str) == 0:
+	if len(str) != len(name):
 		return False
 	return os.path.join(logdir, "%s.gz"%str)
 
 def path2name(path):
 	"Convert a saved-game path to a game-name"
+
 	global logdir
 
 	if len(path) < len(logdir):
@@ -63,6 +65,8 @@ def path2name(path):
 	return path[:-3]
 
 def list_games(conn, chan):
+	"List all games"
+
 	global logdir
 	l = map(lambda x:path2name(os.path.join(logdir, x)),
 		os.listdir(logdir))
@@ -71,12 +75,13 @@ def list_games(conn, chan):
 
 def save_game(conn, chan, game, name):
 	"Saves an ircnukes object to a file"
+
 	global logdir
 
 	l = len(map(lambda x:path2name(os.path.join(logdir, x)),
 		os.listdir(logdir)))
 
-	if l > 2048:
+	if l > 128:
 		raise nukes.GameLogicError(game, "Hey, stop fucking around")
 
 	# Calculate path
@@ -128,7 +133,11 @@ def load_game(conn, chan, name):
 	conn.privmsg(chan, "game '%s' loaded from %s"%(path2name(path), path))
 	return ret
 
+# cmd_XXX() handles each type of irc message once the relevant arguments
+# have been stripped out by the lower level handlers
 def cmd_priv(conn, nick, cmd):
+	"Private message"
+
 	global chan
 	global game
 	global log
@@ -170,6 +179,8 @@ def cmd_priv(conn, nick, cmd):
 	return
 
 def cmd_pub(conn, nick, chan, cmd, logit=True):
+	"Channel message"
+
 	global game
 	global log
 	global deck
@@ -245,15 +256,18 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 	return
 
 def cmd_nick(conn, nick, new):
+	"Nickname changed message"
+
 	global game
 	if game == None:
 		return
 
 	log_line("nick %s %s"%(nick, new))
-	if game != None:
-		game.nick_change(nick, new)
+	game.nick_change(nick, new)
 
 def cmd_quit(conn, nick):
+	"Quit message"
+
 	global game
 	if game == None:
 		return
@@ -262,31 +276,42 @@ def cmd_quit(conn, nick):
 
 	try:
 		p = game.get_player(nick)
+		p.kill(suicide = True)
 	except nukes.GameLogicError, e:
-		print e.desc
-		return
-
-	p.kill(suicide = True)
+		print "quit: %s"%e.desc
+	except nukes.GameOverMan, e:
+		print "quit: Game Over"
+	return
 
 def cmd_kick(conn, kicker, nick):
+	"Kick message"
+
 	global game
 	if game == None:
 		return
 	log_line("kick %s %s"%(kicker, nick))
 
 def cmd_part(conn, nick):
+	"Part message"
+
+	global game
 	if game == None:
 		return
 	log_line("part %s"%nick)
 
 def cmd_join(conn, nick):
+	"Join message"
+
+	global game
 	if game == None:
 		return
 	log_line("join %s"%nick)
 
 def get_nick(str):
+	"Returns a nickname from an IRC nick!user@host"
 	return str.split('!')[0]
 
+# irc_msg_XXX() functions are irclib event handlers
 def irc_msg_priv(conn, ev):
 	print "[priv] <%s> %s"%(get_nick(ev.source()),
 				ev.arguments()[0])
@@ -331,6 +356,7 @@ def irc_msg_join(conn, ev):
 		print "Joined: %s"%ev.target()
 		conn.privmsg(ev.target(), "Would you like to play a game?")
 		return
+	print "%s joined %s"%(get_nick(ev.source()), chan)
 	cmd_join(conn, get_nick(ev.source()))
 
 def irc_msg_umode(conn, ev):

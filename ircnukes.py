@@ -2,6 +2,9 @@ import nukes
 
 class ircnukes(nukes.game):
 	def save_prepare(self):
+		"Prepare to save the object by removing any references"
+		"to non-picklable objects"
+
 		self.__nc = None
 		self.__cmd = None
 		self.__pcmd = None
@@ -10,6 +13,10 @@ class ircnukes(nukes.game):
 		self.dirty = False
 
 	def save_done(self, conn, chan):
+		"Prepare a freshly loaded/saved game for use by re-adding"
+		"references to non-picklable objects and also un-dirty the"
+		"game."
+
 		self.__nc = {"joingame" : self.__joingame,
 				"status" : self.__status}
 		self.__cmd = {"start" : self.__startgame,
@@ -51,7 +58,7 @@ class ircnukes(nukes.game):
 
 	def demilitarize(self):
 		self.game_msg("Peace time, re-create your queues!")
-	
+
 	def player_dead(self, p):
 		if self.state() == nukes.GAME_STATE_INIT:
 			self.game_msg(
@@ -64,7 +71,7 @@ class ircnukes(nukes.game):
 
 	def player_msg(self, p, msg):
 		self.__conn.privmsg(p.name, msg)
-	
+
 	def game_msg(self, msg):
 		self.__conn.privmsg(self.__chan, msg)
 
@@ -153,6 +160,8 @@ class ircnukes(nukes.game):
 		self.dirty = True
 
 	def __status(self, nick, cmd='', arg=[]):
+		"View game or player status"
+
 		str = {nukes.PLAYER_STATE_ALIVE:"alive",
 			nukes.PLAYER_STATE_RETALIATE:"retaliating",
 			nukes.PLAYER_STATE_DEAD:"dead"}
@@ -175,6 +184,7 @@ class ircnukes(nukes.game):
 		return
 
 	def irc_cmd(self, nick, cmd, args):
+		"Channel commands"
 		cmd.lower()
 
 		if self.__nc.has_key(cmd):
@@ -190,6 +200,8 @@ class ircnukes(nukes.game):
 		self.game_msg("%s: command '%s' not known"%(nick, cmd))
 
 	def irc_pcmd(self, nick, cmd, args):
+		"Private message commands"
+
 		p = self.get_player(nick)
 
 		if self.__pcmd.has_key(cmd):
@@ -200,9 +212,12 @@ class ircnukes(nukes.game):
 				"%s: command '%s' not known"%(nick, cmd))
 
 	def irc_list_cmds(self):
+		"List channel commands"
+
 		ret = self.__nc.keys()
 		ret.extend(self.__cmd.keys())
 		return ret
 
 	def irc_list_pcmds(self):
+		"List private message commands"
 		return self.__pcmd.keys()
