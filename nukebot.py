@@ -71,6 +71,13 @@ def list_games(conn, chan):
 
 def save_game(conn, chan, game, name):
 	"Saves an ircnukes object to a file"
+	global logdir
+
+	l = len(map(lambda x:path2name(os.path.join(logdir, x)),
+		os.listdir(logdir)))
+
+	if l > 2048:
+		raise nukes.GameLogicError(game, "Hey, stop fucking around")
 
 	# Calculate path
 	path = name2path(name)
