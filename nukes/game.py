@@ -61,6 +61,9 @@ class game:
 	def player_dead(self, p):
 		filter(lambda x:(x == p) and False or True, self.__turn)
 
+		if len(self.__alive()) == 0:
+			p.state = PLAYER_STATE_DEAD
+
 		if p.state == PLAYER_STATE_RETALIATE:
 			if self.cur == p:
 				self.next_turn()
@@ -72,6 +75,14 @@ class game:
 
 		if self.__players.has_key(p.name):
 			del self.__players[p.name]
+
+		# Check for game over conditions
+		if len(self.__alive()) == 0:
+			raise GameOverMan(self)
+		elif len(self.__alive()) == 1:
+			raise GameOverMan(self,
+				self.__alive()[0])
+
 
 	def player_msg(self, player, msg):
 		print " >> %s: %s"%(player, msg)
@@ -209,13 +220,6 @@ class game:
 			else:
 				self.cur.state = PLAYER_STATE_DEAD
 				break
-
-		# Check for game over conditions
-		if len(self.__alive()) == 0:
-			raise GameOverMan(self)
-		elif len(self.__alive()) == 1:
-			raise GameOverMan(self,
-				self.__alive()[0])
 
 		# After retaliations return to peace
 		if self.cur != None and self.cur.state == PLAYER_STATE_DEAD:
