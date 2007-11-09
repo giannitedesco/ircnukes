@@ -61,28 +61,31 @@ class game:
 	def player_dead(self, p):
 		filter(lambda x:(x == p) and False or True, self.__turn)
 
+		# if retaliator kills last player, or is the last player
+		# then they're dead cos it's game over time anyway
 		if len(self.__alive()) == 0:
 			p.state = PLAYER_STATE_DEAD
 
+		# retaliating, not dead yet
 		if p.state == PLAYER_STATE_RETALIATE:
 			if self.cur == p:
 				self.next_turn()
 			return
 
-		if self.__state != GAME_STATE_INIT:
-			if self.cur == p:
-				self.next_turn()
-
-		if self.__players.has_key(p.name):
-			del self.__players[p.name]
-
 		# Check for game over conditions
 		if len(self.__alive()) == 0:
 			raise GameOverMan(self)
-		elif len(self.__alive()) == 1:
-			raise GameOverMan(self,
-				self.__alive()[0])
+		elif len(self.__alive()) == 1 and \
+			self.__state != GAME_STATE_INIT:
+			raise GameOverMan(self, self.__alive()[0])
 
+		# next persons turn
+		if self.__state != GAME_STATE_INIT:
+			if self.cur == p:
+				self.next_turn()
+		else:
+			if self.__players.has_key(p.name):
+				del self.__players[p.name]
 
 	def player_msg(self, player, msg):
 		print " >> %s: %s"%(player, msg)
@@ -123,7 +126,6 @@ class game:
 			for p in self.__alive():
 				p.cards_to_hand()
 			self.demilitarize()
-			# FIXME: players can change queue now
 
 	def __get_pop(self):
 		"Return a random population card"
