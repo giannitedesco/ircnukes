@@ -44,6 +44,19 @@ class player:
 		raise IllegalMoveError(self.game, self,
 					"Card %s not found"%name)
 
+	def kill(self, suicide=False):
+		if self.state != PLAYER_STATE_ALIVE:
+			return
+		if self.game == None:
+			return
+
+		if suicide == False and self.game.state() == GAME_STATE_WAR:
+			self.state = PLAYER_STATE_RETALIATE
+		else:
+			self.state = PLAYER_STATE_DEAD
+		self.cards_to_hand()
+		self.game.player_dead(self)
+
 	def cards_to_hand(self):
 		"Move all cards back in to the hand"
 
@@ -119,7 +132,7 @@ class player:
 		i = min(self.population, pwnage)
 		self.population = self.population - i
 		if self.population == 0:
-			self.game.kill_player(self)
+			self.kill()
 
 	def transfer_population(self, converts, tgt):
 		"Transfer population to another player"
@@ -128,4 +141,4 @@ class player:
 		self.population = self.population - i
 		tgt.population = tgt.population + i
 		if self.population == 0:
-			self.game.kill_player(self)
+			self.kill()

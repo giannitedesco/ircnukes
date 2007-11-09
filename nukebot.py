@@ -259,7 +259,7 @@ def cmd_quit(conn, nick):
 		print e.desc
 		return
 
-	game.kill_player(p, delete=True)
+	p.kill(suicide = True)
 
 def cmd_kick(conn, kicker, nick):
 	global game

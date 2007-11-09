@@ -56,8 +56,7 @@ class ircnukes(nukes.game):
 		if self.state() == nukes.GAME_STATE_INIT:
 			self.game_msg(
 				"%s was deterred and ran home crying"%p.name)
-			return
-		if self.state() == nukes.GAME_STATE_WAR:
+		elif self.state() == nukes.GAME_STATE_WAR:
 			self.game_msg("%s reduced to rubble.. loser"%p.name)
 		else:
 			self.game_msg("%s died from a peace offensive"%p.name)
@@ -104,7 +103,7 @@ class ircnukes(nukes.game):
 
 	def __suicide(self, p, cmd='', arg=[]):
 		"Leave a game at any time"
-		self.kill_player(p)
+		p.kill(suicide = True)
 		self.dirty = True
 
 	def __joingame(self, nick, cmd='', args=[]):

@@ -59,9 +59,20 @@ class game:
 	def pass_control(self, p):
 		raise Exception("NotReached")
 	def player_dead(self, p):
-		p.cards_to_hand()
-		if self.cur == p:
-			self.next_turn()
+		filter(lambda x:(x == p) and False or True, self.__turn)
+
+		if p.state == PLAYER_STATE_RETALIATE:
+			if self.cur == p:
+				self.next_turn()
+			return
+
+		if self.__state != GAME_STATE_INIT:
+			if self.cur == p:
+				self.next_turn()
+
+		if self.__players.has_key(p.name):
+			del self.__players[p.name]
+
 	def player_msg(self, player, msg):
 		print " >> %s: %s"%(player, msg)
 	def game_msg(self, msg):
@@ -81,28 +92,6 @@ class game:
 		self.__players[new_name] = p
 		del self.__players[p.name]
 		p.name = new_name
-
-	def kill_player(self, p, delete=False):
-		if p.state != PLAYER_STATE_ALIVE:
-			return
-		if self.__state == GAME_STATE_INIT:
-			p.state = PLAYER_STATE_DEAD
-			p.cards_to_hand()
-			if self.__players.has_key(p.name):
-				self.player_dead(p)
-				del self.__players[p.name]
-			if len(self.__players) == 0:
-				raise GameOverMan(self)
-			return
-
-		if self.__turn.count(p):
-			self.__turn.remove(p)
-
-		if self.__state == GAME_STATE_WAR and delete == False:
-			p.state = PLAYER_STATE_RETALIATE
-		else:
-			p.state = PLAYER_STATE_DEAD
-		self.player_dead(p)
 
 	def state(self):
 		"Return the game state"
