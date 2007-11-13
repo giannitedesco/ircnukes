@@ -63,25 +63,27 @@ class game:
 	def game_msg(self, msg):
 		print " >> %s: %s"%(self, msg)
 	def player_dead(self, p):
-		filter(lambda x:(x == p) and False or True, self.__turn)
+		while self.__turn.count(p):
+			self.__turn.remove(p)
 
 		# if retaliator kills last player, or is the last player
 		# then they're dead cos it's game over time anyway
 		if len(self.__alive()) == 0:
 			p.state = PLAYER_STATE_DEAD
 
+		# Check for game over conditions
+		if len(self.__alive()) == 0:
+			raise GameOverMan(self)
+		elif len(self.__alive()) == 1 and \
+			p.state != PLAYER_STATE_RETALIATE and \
+			self.__state != GAME_STATE_INIT:
+			raise GameOverMan(self, self.__alive()[0])
+
 		# retaliating, not dead yet
 		if p.state == PLAYER_STATE_RETALIATE:
 			if self.cur == p:
 				self.next_turn()
 			return
-
-		# Check for game over conditions
-		if len(self.__alive()) == 0:
-			raise GameOverMan(self)
-		elif len(self.__alive()) == 1 and \
-			self.__state != GAME_STATE_INIT:
-			raise GameOverMan(self, self.__alive()[0])
 
 		if self.__state == GAME_STATE_INIT:
 			# player simply drops out of whole game
@@ -199,8 +201,11 @@ class game:
 			self.__state == GAME_STATE_INIT:
 			raise GameLogicError(self, "Game not in progress")
 
+		# next turn called during retaliation means player is
+		# finally dead (eg. !done)
 		if self.cur and self.cur.state == PLAYER_STATE_RETALIATE:
 			self.cur.state = PLAYER_STATE_DEAD
+			game.player_dead(self, self.cur)
 
 		# Handle outstanding retaliations
 		while len(self.__retaliate()):
@@ -212,6 +217,12 @@ class game:
 			else:
 				self.cur.state = PLAYER_STATE_DEAD
 				break
+
+		# Make sure theres a living player
+		if len(self.__alive()) == 0:
+			raise GameOverMan(self)
+		elif len(self.__alive()) == 1:
+			raise GameOverMan(self, self.__alive()[0])
 
 		# After retaliations return to peace
 		if self.cur != None and self.cur.state == PLAYER_STATE_DEAD:
