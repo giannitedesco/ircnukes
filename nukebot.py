@@ -342,8 +342,12 @@ def irc_msg_kick(conn, ev):
 	cmd_kick(conn, get_nick(ev.source()), ev.arguments()[0])
 
 def irc_msg_part(conn, ev):
+	if len(ev.arguments):
+		arg = ev.arguments()[0]
+	else:
+		arg = ''
 	print "%s left %s (%s)"%(get_nick(ev.source()), \
-				ev.target(), ev.arguments()[0])
+				ev.target(), arg)
 	cmd_part(conn, get_nick(ev.source()))
 
 def irc_msg_nick(conn, ev):
