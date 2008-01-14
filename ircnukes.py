@@ -49,7 +49,7 @@ class ircnukes(nukes.game):
 			p = self.get_player(old)
 			self.rename_player(p, new)
 			self.dirty = True
-		except GameLogicError, e:
+		except nukes.GameLogicError, e:
 			self.game_msg("Error renaming %s to %s: %s"%(old,\
 					new, e.desc))
 
