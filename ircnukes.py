@@ -63,8 +63,11 @@ class ircnukes(nukes.game):
 	def add_player(self, p):
 		nukes.game.add_player(self, p)
 
+	def war(self):
+		self.game_msg("\x02\x034,99WAR DECLARED!\x02\x03")
+
 	def demilitarize(self):
-		self.game_msg("Peace time, re-create your queues!")
+		self.game_msg("\x02\x033,99Peace time\x02\x03, re-create your queues!")
 
 	def player_dead(self, p):
 		if self.state() == nukes.GAME_STATE_INIT:
@@ -171,9 +174,9 @@ class ircnukes(nukes.game):
 			nukes.PLAYER_STATE_DEAD:"dead"}
 
 		if self.state() == nukes.GAME_STATE_PEACE:
-			self.game_msg("Peace time:")
+			self.game_msg("\x02\x033,99Peace time\x03:\x02")
 		elif self.state() == nukes.GAME_STATE_WAR:
-			self.game_msg("War time:")
+			self.game_msg("\x02\x034,99War time\x03:\x02")
 		else:
 			self.game_msg("Game status:")
 

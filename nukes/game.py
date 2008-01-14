@@ -113,6 +113,10 @@ class game:
 	def state(self):
 		"Return the game state"
 		return self.__state
+	
+	def war(self):
+		"Give subclasses a chance to declare the war"
+		return
 
 	def transition(self, state):
 		"Transition between war and peace"
@@ -123,9 +127,8 @@ class game:
 			return
 		self.__state = state
 		if self.__state == GAME_STATE_WAR:
-			self.game_msg("%s: WAR DECLARED"%self.__name)
+			self.war()
 		else:
-			self.game_msg("%s: PEACE"%self.__name)
 			for p in self.__alive():
 				p.cards_to_hand()
 			self.demilitarize()
