@@ -10,7 +10,7 @@ brutality set in the current, possibly terminal, era of human existence
 TODO:
  o python code documentation
  o polish up irc code
-   o !votekick
+   o bot-disconnect detection code doesn't work somehow...
    o end the game if the bot disconnects (autosave)
    o loadgame needs a way to reassociate nicks that may have changed
      o use idents and hosts?
@@ -19,7 +19,7 @@ TODO:
    o handle player parting/kicked from game channel
    o command line args for nukebot
    o help <command> for detailed output
- o Disallow queueing cards before !start
+   o !votekick
  o Allow deterrents (priv command to transfer between deterrent/hand)
  o Implement interceptors
  o Keep player stats (pld/win/lost/amusing ircstats type stuff)

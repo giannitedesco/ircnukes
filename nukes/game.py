@@ -150,16 +150,15 @@ class game:
 		if self.__players.has_key(p.name):
 			raise GameLogicError(self, "Duplicate player name")
 
-		# Deal population cards
-		for i in range(0, 9):
-			p.population += self.__get_pop()
-
-		for i in range(0,9):
-			p.hand.append(self.deal_card())
-
 		print "%s: %s: pop. %uM"%(self, p, p.population)
 		self.__players[p.name] = p
 		p.game = self
+	
+	def deal_in_player(self, p):
+		for i in range(0, 9):
+			p.population += self.__get_pop()
+		for i in range(0,9):
+			p.hand.append(self.deal_card())
 
 	def commence(self):
 		"Prepare the game for the first turn"
@@ -169,9 +168,7 @@ class game:
 		if len(self.__players) < 2:
 			raise GameLogicError(self, "Lonely without players")
 		for p in self.__players.values():
-			if len(p.card_stack) < CARD_STACK_LEN:
-				raise GameLogicError(self,
-					"Cards not queued", player=p)
+			self.deal_in_player(p)
 		self.__state = GAME_STATE_PEACE
 		self.game_msg("Game started")
 		self.next_turn()

@@ -44,6 +44,13 @@ class ircnukes(nukes.game):
 		self.game_msg("%s, it's time for final retaliation!"%p.name)
 		self.game_msg("%s has: %s"%(p.name, p.hand))
 
+	def deal_in_player(self, p):
+		nukes.game.deal_in_player(self, p)
+		self.__get_pop(p)
+		self.__get_hand(p)
+		self.__get_queue(p)
+		self.dirty = True
+
 	def nick_change(self, old, new):
 		try:
 			p = self.get_player(old)
@@ -119,9 +126,6 @@ class ircnukes(nukes.game):
 		p = nukes.player(nick)
 		self.add_player(p)
 		self.game_msg("%s joins the game"%p)
-		self.__get_pop(p)
-		self.__get_hand(p)
-		self.__get_queue(p)
 		self.dirty = True
 
 	def __flip(self, p, cmd='', arg=[]):
