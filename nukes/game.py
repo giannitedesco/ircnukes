@@ -153,7 +153,7 @@ class game:
 		if self.__players.has_key(p.name):
 			raise GameLogicError(self, "Duplicate player name")
 
-		print "%s: %s: pop. %uM"%(self, p, p.population)
+		print "%s: %s"%(self, p)
 		self.__players[p.name] = p
 		p.game = self
 	
