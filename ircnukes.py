@@ -10,7 +10,6 @@ class ircnukes(nukes.game):
 		self.__pcmd = None
 		self.__conn = None
 		self.__chan = None
-		sekf.__dirty = self.dirty
 		self.dirty = False
 
 	def save_done(self, conn, chan):
@@ -31,7 +30,7 @@ class ircnukes(nukes.game):
 				"push" : self.__push_card}
 		self.__conn = conn
 		self.__chan = chan
-		self.dirty = self.__dirty
+		self.dirty = False
 
 	def __init__(self, conn, chan, deck=None):
 		self.save_done(conn, chan)
