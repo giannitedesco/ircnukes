@@ -79,6 +79,8 @@ class warhead(card):
 	def dequeue(self, g, p, tgt = None):
 		if tgt == None:
 			raise IllegalMoveError(g, p, "Must target warhead")
+		if tgt.state is not PLAYER_STATE_ALIVE:
+			raise IllegalMoveError(g, p, "Overkill, you may not fuck the dead")
 
 		# Make sure theres a delivery mech
 		if p.weapon == None:
