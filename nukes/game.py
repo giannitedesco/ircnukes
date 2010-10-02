@@ -74,7 +74,7 @@ class game:
 		# Check for game over conditions
 		if len(self.__alive()) == 0:
 			raise GameOverMan(self)
-		elif len(self.__alive()) == 1 and \
+		elif len(self.__alive() + self.__retaliate()) == 1 and \
 			p.state != PLAYER_STATE_RETALIATE and \
 			self.__state != GAME_STATE_INIT:
 			raise GameOverMan(self, self.__alive()[0])

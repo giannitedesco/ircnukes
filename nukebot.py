@@ -3,12 +3,13 @@
 import nukes,irclib,random,time,os
 from ircnukes import ircnukes
 import pickle, gzip, os
+import socket
 
 nick = '[skynet]'
 name = 'ircnukes'
 #svr = ('irc.quakenet.eu.org', 6667)
 svr = ('irc.b0rk.co.uk', 6667)
-chan = '#nukes'
+chan = '#webdev'
 logdir = './saved-games'
 #deck = './decks/original.deck'
 deck = './decks/andrew.looney.deck'
@@ -342,9 +343,9 @@ def irc_msg_kick(conn, ev):
 	cmd_kick(conn, get_nick(ev.source()), ev.arguments()[0])
 
 def irc_msg_part(conn, ev):
-	if len(ev.arguments):
+	try:
 		arg = ev.arguments()[0]
-	else:
+	except:
 		arg = ''
 	print "%s left %s (%s)"%(get_nick(ev.source()), \
 				ev.target(), arg)
@@ -372,6 +373,7 @@ def irc_disconnect(conn, ev):
 	time.sleep(15)
 	s = irc.server()
 	s.connect(svr[0], svr[1], nick, ircname=name, username=name)
+	s.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
 
 if __name__ == "__main__":
 	#irclib.DEBUG = True
@@ -388,6 +390,7 @@ if __name__ == "__main__":
 
 	s = irc.server()
 	s.connect(svr[0], svr[1], nick, ircname=name, username=name)
+	s.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
 
 	try:
 		irc.process_forever()
