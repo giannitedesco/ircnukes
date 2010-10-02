@@ -9,6 +9,7 @@ brutality set in the current, possibly terminal, era of human existence
 
 TODO:
  o python code documentation
+ o implement irc case-insensitive player names
  o polish up irc code
    o bot-disconnect detection code doesn't work somehow...
    o end the game if the bot disconnects (autosave)
