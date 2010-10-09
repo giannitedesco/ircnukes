@@ -28,6 +28,10 @@ class ircnukes(nukes.game):
 				"queue" : self.__get_queue,
 				"population" : self.__get_pop,
 				"push" : self.__push_card}
+		self.__pcmd_alias = {"h" : "hand",
+					"p" : "push",
+					"q" : "queue",
+					"pop" : "population"}
 		self.__conn = conn
 		self.__chan = chan
 		self.dirty = False
@@ -210,6 +214,8 @@ class ircnukes(nukes.game):
 		"Private message commands"
 
 		p = self.get_player(nick)
+
+		cmd = self.__pcmd_alias.get(cmd)
 
 		if self.__pcmd.has_key(cmd):
 			self.__pcmd[cmd](p, cmd, args)
