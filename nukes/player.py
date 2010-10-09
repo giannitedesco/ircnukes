@@ -45,7 +45,7 @@ class player:
 					"Card %s not found"%name)
 
 	def kill(self, suicide=False):
-		if self.state != PLAYER_STATE_ALIVE:
+		if self.state == PLAYER_STATE_DEAD:
 			return
 		if self.game == None:
 			return
