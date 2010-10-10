@@ -215,7 +215,7 @@ class ircnukes(nukes.game):
 
 		p = self.get_player(nick)
 
-		cmd = self.__pcmd_alias.get(cmd)
+		cmd = self.__pcmd_alias.get(cmd, cmd)
 
 		if self.__pcmd.has_key(cmd):
 			self.__pcmd[cmd](p, cmd, args)
