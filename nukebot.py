@@ -6,7 +6,7 @@ import pickle, gzip, os
 import socket
 
 nick = '[skynet]'
-name = 'ircnukes'
+name = 'ircnuk0rs'
 #svr = ('irc.quakenet.eu.org', 6667)
 svr = ('irc.b0rk.co.uk', 6667)
 chan = '#webdev'
@@ -156,7 +156,7 @@ def cmd_priv(conn, nick, cmd):
 		return
 
 	if game == None:
-		conn.privmsg(nick, "No game, join %s..."%chan)
+		#conn.privmsg(nick, "No game, join %s..."%chan)
 		return
 
 	try:
@@ -250,9 +250,7 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 	except nukes.IllegalMoveError, e:
 		conn.privmsg(chan, "%s: Illegal Move: %s"%(e.player, e.desc))
 	except nukes.GameLogicError, e:
-		if e.player == None:
-			conn.privmsg(chan, "%s: Bad Command: %s"%(nick, e.desc))
-		else:
+		if e.player is not None:
 			conn.privmsg(chan, "%s: %s"%(e.player, e.desc))
 	return
 
