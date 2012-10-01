@@ -71,8 +71,12 @@ def list_games(conn, chan):
 	global logdir
 	l = map(lambda x:path2name(os.path.join(logdir, x)),
 		os.listdir(logdir))
-	str = ', '.join(l)
-	conn.privmsg(chan, "Saved Games: %s"%str)
+	if len(l):
+		s = ', '.join(l)
+		conn.privmsg(chan, "Saved Games: %s"%s)
+	else:
+		conn.privmsg(chan, "No saved games")
+
 
 def save_game(conn, chan, game, name):
 	"Saves an ircnukes object to a file"
@@ -173,7 +177,7 @@ def cmd_priv(conn, nick, cmd):
 	except nukes.IllegalMoveError, e:
 		conn.privmsg(nick, "%s: Illegal Move: %s"%(e.player, e.desc))
 	except nukes.GameLogicError, e:
-		if e.player == None:
+		if e.player is None:
 			conn.privmsg(nick, "%s: Bad Command: %s"%(nick, e.desc))
 		else:
 			conn.privmsg(nick, "%s: %s"%(e.player, e.desc))
@@ -198,7 +202,7 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 		except nukes.GameLogicError, e:
 			conn.privmsg(chan, "error: %s: %s"%(deck, e.desc))
 			return
-		conn.privmsg(chan, "Game started: %s"%game)
+		conn.privmsg(chan, "Game created: %s"%game)
 		if logit == True:
 			randomseed = int(time.time())
 			random.seed(randomseed)
@@ -250,7 +254,9 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 	except nukes.IllegalMoveError, e:
 		conn.privmsg(chan, "%s: Illegal Move: %s"%(e.player, e.desc))
 	except nukes.GameLogicError, e:
-		if e.player is not None:
+		if e.player is None:
+			conn.privmsg(chan, "%s: %s"%(nick, e.desc))
+		else:
 			conn.privmsg(chan, "%s: %s"%(e.player, e.desc))
 	return
 
@@ -308,7 +314,7 @@ def cmd_join(conn, nick):
 
 def get_nick(str):
 	"Returns a nickname from an IRC nick!user@host"
-	return str.split('!')[0]
+	return irclib.irc_lower(str.split('!')[0])
 
 # irc_msg_XXX() functions are irclib event handlers
 def irc_msg_priv(conn, ev):
@@ -352,7 +358,7 @@ def irc_msg_part(conn, ev):
 def irc_msg_nick(conn, ev):
 
 	print "%s is now known as %s"%(get_nick(ev.source()), ev.target())
-	cmd_nick(conn, get_nick(ev.source()), ev.target())
+	cmd_nick(conn, get_nick(ev.source()), irclib.irc_lower(ev.target()))
 
 def irc_msg_join(conn, ev):
 	if get_nick(ev.source()) == conn.get_nickname():
