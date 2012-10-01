@@ -137,6 +137,9 @@ class player:
 	def transfer_population(self, converts, tgt):
 		"Transfer population to another player"
 
+		if self.state != PLAYER_STATE_ALIVE:
+			raise IllegalMoveError(self.game, self,
+				"Cannot transfer population from dead enemy")
 		i = min(self.population, converts)
 		self.population = self.population - i
 		tgt.population = tgt.population + i
