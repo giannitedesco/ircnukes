@@ -59,6 +59,8 @@ class ircnukes(nukes.game):
 		sleep(0.5)
 
 	def nick_change(self, old, new):
+		if old == new:
+			return
 		try:
 			p = self.get_player(old)
 			self.rename_player(p, new)
