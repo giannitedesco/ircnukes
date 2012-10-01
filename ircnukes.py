@@ -1,4 +1,6 @@
 import nukes
+from time import sleep
+from irclib import irc_lower
 
 class ircnukes(nukes.game):
 	def save_prepare(self):
@@ -17,7 +19,7 @@ class ircnukes(nukes.game):
 		"references to non-picklable objects and also un-dirty the"
 		"game."
 
-		self.__nc = {"joingame" : self.__joingame,
+		self.__nc = {"join" : self.__joingame,
 				"status" : self.__status}
 		self.__cmd = {"start" : self.__startgame,
 				"suicide" : self.__suicide,
@@ -54,6 +56,7 @@ class ircnukes(nukes.game):
 		self.__get_hand(p)
 		self.__get_queue(p)
 		self.dirty = True
+		sleep(0.5)
 
 	def nick_change(self, old, new):
 		try:
@@ -88,6 +91,9 @@ class ircnukes(nukes.game):
 
 	def game_msg(self, msg):
 		self.__conn.privmsg(self.__chan, msg)
+
+	def get_player(self, name):
+		return nukes.game.get_player(self, irc_lower(name))
 
 	# Private commands
 	def __get_pop(self, p, cmd='', arg=[]):
@@ -192,6 +198,7 @@ class ircnukes(nukes.game):
 			self.game_msg(" > %s: %s%s%s"%(x.name, str[x.state],
 				x.weapon != None and ": %r"%x.weapon or "",
 				self.cur == x and " (*)" or ""))
+			sleep(0.15)
 		return
 
 	def irc_cmd(self, nick, cmd, args):

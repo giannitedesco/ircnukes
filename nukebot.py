@@ -9,7 +9,7 @@ nick = '[skynet]'
 name = 'ircnuk0rs'
 #svr = ('irc.quakenet.eu.org', 6667)
 svr = ('irc.b0rk.co.uk', 6667)
-chan = '#webdev'
+chan = '#elenadirollo'
 logdir = './saved-games'
 #deck = './decks/original.deck'
 deck = './decks/andrew.looney.deck'
@@ -192,7 +192,7 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 	if not len(arg):
 		return
 
-	if arg[0] == "creategame":
+	if arg[0] == "create":
 		try:
 			game = ircnukes(conn, chan, deck)
 		except nukes.GameLogicError, e:
@@ -204,7 +204,7 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 			random.seed(randomseed)
 			log = open("nukebot.log", "w")
 			log_line("randomseed %u"%randomseed)
-			log_line("chan %s creategame"%chan)
+			log_line("chan %s create"%chan)
 			log.flush()
 		return
 	elif arg[0] == "savegame":
