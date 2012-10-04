@@ -9,7 +9,7 @@ nick = '[skynet]'
 name = 'ircnuk0rs'
 #svr = ('irc.quakenet.eu.org', 6667)
 svr = ('irc.b0rk.co.uk', 6667)
-chan = '#elenadirollo'
+chan = '#nukes'
 logdir = './saved-games'
 #deck = './decks/original.deck'
 deck = './decks/andrew.looney.deck'
@@ -17,6 +17,49 @@ game = None
 okhash = None
 log = None
 irc = irclib.IRC()
+
+class TokenBucket:
+	from time import sleep, time
+
+	def __init__(self, rate, burst = None):
+		'Rate in tokens per second, burst in number of tokens'
+
+		self.rate = float(rate)
+		if burst is None:
+			burst = self.rate
+		self.rate = 1 / self.rate
+		self.burst = float(burst) * self.rate
+		self.toks = self.burst
+		self.last = self.now()
+	
+	def now(self):
+		return self.time()
+
+	def rate_limit(self, tokens = 1.0):
+		tokens = float(tokens)
+
+		if self.rate <= 0:
+			return
+
+		h = self.now()
+		diff = h - self.last
+		self.toks += diff
+		self.last = h
+
+		if self.toks > self.burst:
+			self.toks = self.burst
+
+		if self.toks >= self.rate:
+			self.toks -= self.rate
+
+		if self.toks < self.rate:
+			self.sleep((self.rate - self.toks))
+
+tbf = TokenBucket(2.0, 5.0)
+def privmsg(conn, tgt, msg):
+	global tbf
+	tbf.rate_limit()
+	conn.privmsg(tgt, msg)
 
 def log_line(str):
 	global log
@@ -73,9 +116,9 @@ def list_games(conn, chan):
 		os.listdir(logdir))
 	if len(l):
 		s = ', '.join(l)
-		conn.privmsg(chan, "Saved Games: %s"%s)
+		privmsg(conn, chan, "Saved Games: %s"%s)
 	else:
-		conn.privmsg(chan, "No saved games")
+		privmsg(conn, chan, "No saved games")
 
 
 def save_game(conn, chan, game, name):
@@ -92,7 +135,7 @@ def save_game(conn, chan, game, name):
 	# Calculate path
 	path = name2path(name)
 	if path == False or path2name(path) == False:
-		conn.privmsg(chan, 'bad game-name, try [a-z0-9_-]')
+		privmsg(conn, chan, 'bad game-name, try [a-z0-9_-]')
 		return
 
 	# open the file and dump the game object, making sure to
@@ -103,7 +146,7 @@ def save_game(conn, chan, game, name):
 		pickle.dump(game, f)
 		f.close()
 	except Exception, e:
-		conn.privmsg(chan, "Writing to %s failed: %s"%(path, \
+		privmsg(conn, chan, "Writing to %s failed: %s"%(path, \
 				(e.strerror == None) \
 				and e.message or e.strerror))
 		game.save_done(conn, chan)
@@ -111,7 +154,7 @@ def save_game(conn, chan, game, name):
 		return
 	game.save_done(conn, chan)
 
-	conn.privmsg(chan, "game '%s' saved to %s"%(path2name(path), path))
+	privmsg(conn, chan, "game '%s' saved to %s"%(path2name(path), path))
 
 def load_game(conn, chan, name):
 	"Loads an ircnukes object from a file and returns it"
@@ -119,7 +162,7 @@ def load_game(conn, chan, name):
 	# Calculate path
 	path = name2path(name)
 	if path == False or path2name(path) == False:
-		conn.privmsg(chan, 'bad game-name, try [a-z0-9_-]')
+		privmsg(conn, chan, 'bad game-name, try [a-z0-9_-]')
 		return
 
 	# open the file, load up the game object, and restore the stuff
@@ -129,13 +172,13 @@ def load_game(conn, chan, name):
 		ret = pickle.load(f)
 		f.close()
 	except Exception, e:
-		conn.privmsg(chan, "Reading from %s failed: %s"%(path, \
+		privmsg(conn, chan, "Reading from %s failed: %s"%(path, \
 				(e.strerror == None) \
 				and e.message or e.strerror))
 		return
 	ret.save_done(conn, chan)
 
-	conn.privmsg(chan, "game '%s' loaded from %s"%(path2name(path), path))
+	privmsg(conn, chan, "game '%s' loaded from %s"%(path2name(path), path))
 	return ret
 
 # cmd_XXX() handles each type of irc message once the relevant arguments
@@ -154,13 +197,15 @@ def cmd_priv(conn, nick, cmd):
 		return
 
 	if arg[0] == "help":
-		tmp = ircnukes(None, None)
+		def closure(tgt, msg):
+			return
+		tmp = ircnukes(closure, None)
 		h = tmp.irc_list_pcmds()
-		conn.privmsg(nick, "Commands: %s"%(' '.join(h)))
+		privmsg(conn, nick, "Commands: %s"%(' '.join(h)))
 		return
 
 	if game == None:
-		#conn.privmsg(nick, "No game, join %s..."%chan)
+		#privmsg(conn, nick, "No game, join %s..."%chan)
 		return
 
 	try:
@@ -168,19 +213,19 @@ def cmd_priv(conn, nick, cmd):
 		game.irc_pcmd(nick, arg[0], arg[1:])
 	except nukes.GameOverMan, e:
 		if e.winner == None:
-			conn.privmsg(chan, "GameOver: MAD, noone wins")
+			privmsg(conn, chan, "GameOver: MAD, noone wins")
 		else:
-			conn.privmsg(chan, "GameOver: winner is %s "
+			privmsg(conn, chan, "GameOver: winner is %s "
 				"with %u million population"%(e.winner.name,
 				e.winner.population))
 		game = None
 	except nukes.IllegalMoveError, e:
-		conn.privmsg(nick, "%s: Illegal Move: %s"%(e.player, e.desc))
+		privmsg(conn, nick, "%s: Illegal Move: %s"%(e.player, e.desc))
 	except nukes.GameLogicError, e:
 		if e.player is None:
-			conn.privmsg(nick, "%s: Bad Command: %s"%(nick, e.desc))
+			privmsg(conn, nick, "%s: Bad Command: %s"%(nick, e.desc))
 		else:
-			conn.privmsg(nick, "%s: %s"%(e.player, e.desc))
+			privmsg(conn, nick, "%s: %s"%(e.player, e.desc))
 	return
 
 def cmd_pub(conn, nick, chan, cmd, logit=True):
@@ -197,12 +242,14 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 		return
 
 	if arg[0] == "create":
+		def closure(tgt, msg):
+			privmsg(conn, tgt, msg)
 		try:
-			game = ircnukes(conn, chan, deck)
+			game = ircnukes(closure, chan, deck)
 		except nukes.GameLogicError, e:
-			conn.privmsg(chan, "error: %s: %s"%(deck, e.desc))
+			privmsg(conn, chan, "error: %s: %s"%(deck, e.desc))
 			return
-		conn.privmsg(chan, "Game created: %s"%game)
+		privmsg(conn, chan, "Game created: %s"%game)
 		if logit == True:
 			randomseed = int(time.time())
 			random.seed(randomseed)
@@ -213,9 +260,9 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 		return
 	elif arg[0] == "savegame":
 		if game == None:
-			conn.privmsg(chan, "No game to save")
+			privmsg(conn, chan, "No game to save")
 		elif len(arg) < 2:
-			conn.privmsg(chan, "games need names baby")
+			privmsg(conn, chan, "games need names baby")
 		else:
 			save_game(conn, chan, game, arg[1])
 		return
@@ -224,9 +271,9 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 		return
 	elif arg[0] == "loadgame":
 		if game != None and game.dirty:
-			conn.privmsg(chan, "Game in progress, save it first")
+			privmsg(conn, chan, "Game in progress, save it first")
 		elif len(arg) < 2:
-			conn.privmsg(chan, "!listgames to find one to load")
+			privmsg(conn, chan, "!listgames to find one to load")
 		else:
 			game = load_game(conn, chan, arg[1])
 		return
@@ -234,30 +281,30 @@ def cmd_pub(conn, nick, chan, cmd, logit=True):
 		tmp = ircnukes(None, None)
 		h = tmp.irc_list_cmds()
 		h.extend(["creategame", "savegame", "loadgame", "listgames"])
-		conn.privmsg(chan, "Commands: %s"%(' '.join(h)))
+		privmsg(conn, chan, "Commands: %s"%(' '.join(h)))
 		return
 
 	if game == None:
-		conn.privmsg(chan, "No game, try !creategame")
+		privmsg(conn, chan, "No game, try !create")
 		return
 
 	try:
 		game.irc_cmd(nick, arg[0], arg[1:])
 	except nukes.GameOverMan, e:
 		if e.winner == None:
-			conn.privmsg(chan, "GameOver: MAD, noone wins")
+			privmsg(conn, chan, "GameOver: MAD, noone wins")
 		else:
-			conn.privmsg(chan, "GameOver: winner is %s "
+			privmsg(conn, chan, "GameOver: winner is %s "
 				"with %u million population"%(e.winner.name,
 				e.winner.population))
 		game = None
 	except nukes.IllegalMoveError, e:
-		conn.privmsg(chan, "%s: Illegal Move: %s"%(e.player, e.desc))
+		privmsg(conn, chan, "%s: Illegal Move: %s"%(e.player, e.desc))
 	except nukes.GameLogicError, e:
 		if e.player is None:
-			conn.privmsg(chan, "%s: %s"%(nick, e.desc))
+			privmsg(conn, chan, "%s: %s"%(nick, e.desc))
 		else:
-			conn.privmsg(chan, "%s: %s"%(e.player, e.desc))
+			privmsg(conn, chan, "%s: %s"%(e.player, e.desc))
 	return
 
 def cmd_nick(conn, nick, new):
@@ -363,7 +410,7 @@ def irc_msg_nick(conn, ev):
 def irc_msg_join(conn, ev):
 	if get_nick(ev.source()) == conn.get_nickname():
 		print "Joined: %s"%ev.target()
-		conn.privmsg(ev.target(), "Would you like to play a game?")
+		privmsg(conn, ev.target(), "Would you like to play a game?")
 		return
 	print "%s joined %s"%(get_nick(ev.source()), chan)
 	cmd_join(conn, get_nick(ev.source()))

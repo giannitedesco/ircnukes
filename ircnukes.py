@@ -1,5 +1,4 @@
 import nukes
-from time import sleep
 from irclib import irc_lower
 
 class ircnukes(nukes.game):
@@ -10,7 +9,7 @@ class ircnukes(nukes.game):
 		self.__nc = None
 		self.__cmd = None
 		self.__pcmd = None
-		self.__conn = None
+		self.__privmsg = None
 		self.__chan = None
 		self.dirty = False
 
@@ -34,7 +33,7 @@ class ircnukes(nukes.game):
 					"p" : "push",
 					"q" : "queue",
 					"pop" : "population"}
-		self.__conn = conn
+		self.__privmsg = conn
 		self.__chan = chan
 		self.dirty = False
 
@@ -56,7 +55,6 @@ class ircnukes(nukes.game):
 		self.__get_hand(p)
 		self.__get_queue(p)
 		self.dirty = True
-		sleep(0.5)
 
 	def nick_change(self, old, new):
 		if old == new:
@@ -89,10 +87,10 @@ class ircnukes(nukes.game):
 		nukes.game.player_dead(self, p)
 
 	def player_msg(self, p, msg):
-		self.__conn.privmsg(p.name, msg)
+		self.__privmsg(p.name, msg)
 
 	def game_msg(self, msg):
-		self.__conn.privmsg(self.__chan, msg)
+		self.__privmsg(self.__chan, msg)
 
 	def get_player(self, name):
 		return nukes.game.get_player(self, irc_lower(name))
@@ -200,7 +198,6 @@ class ircnukes(nukes.game):
 			self.game_msg(" > %s: %s%s%s"%(x.name, str[x.state],
 				x.weapon != None and ": %r"%x.weapon or "",
 				self.cur == x and " (*)" or ""))
-			sleep(0.15)
 		return
 
 	def irc_cmd(self, nick, cmd, args):
@@ -230,7 +227,7 @@ class ircnukes(nukes.game):
 			self.__pcmd[cmd](p, cmd, args)
 			return
 
-		self.__conn.privmsg(nick,
+		self.__privmsg(nick,
 				"%s: command '%s' not known"%(nick, cmd))
 
 	def irc_list_cmds(self):
