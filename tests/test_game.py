@@ -233,21 +233,20 @@ class TestCards:
     def test_missile_deploys_as_weapon(self) -> None:
         g = _make_started_game("alice", "bob")
         alice = g.get_player("alice")
-        # Give alice a missile in her queue
+        # Give alice a missile then a warhead in her queue (LIFO queue)
         m = missile(20)
+        w = warhead(10)
         alice.hand.insert(0, m)
-        alice.queue_card("0")
-        alice.hand.insert(0, warhead(10))
-        alice.queue_card("0")
+        alice.queue_card("0")  # missile is first in queue
+        alice.hand.insert(0, w)
+        alice.queue_card("0")  # warhead is second
 
-        # Manually check weapon starts None
-        assert alice.weapon is None
-        # Make it alice's turn
+        # Make it alice's turn; flip the first queued card (missile)
         g.cur = alice
-        alice.flip_card(g.get_player("bob"))
-        # After flipping the missile card alice should have a weapon
-        # (or she may have already consumed it – depends on queue order)
-        # Either way no exception should be raised
+        assert alice.weapon is None
+        alice.flip_card(None)
+        # After flipping the missile card, alice should have it as weapon
+        assert alice.weapon is m
 
     def test_warhead_requires_target(self) -> None:
         g = _make_started_game("alice", "bob")

@@ -87,10 +87,12 @@ class warhead(card):
             if self.megatons == NUKE_YIELD_100MT:
                 g.game_msg(
                     f" > {g.cur.name}, you blew up the world, "  # type: ignore[union-attr]
+                    "it's your job to tidy the mess!"
                 )
                 g.apocalypse()
         elif r < 12:
             g.game_msg(" > Hit nuclear power plant, double yield")
+            g.game_msg(f" > {tgt.name} misses a turn!")
             b *= 2
             m = True
 
