@@ -1,51 +1,65 @@
-# Copyright (c) 2007 Gianni Tedesco
-# Released under the terms of the GNU GPL v2 or later
-#
-# Missile base class
+"""Bomber delivery-system card."""
 
-from card import card
-from globals import *
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .player import player
+    from .warhead import warhead as Warhead
+    from .game import game
+
+from .card import card
+from .globals import GAME_STATE_WAR
+
 
 class bomber(card):
-	def __init__(self, max_payload=10, name="bomber"):
-		self.max_payload = max_payload
-		self.payload = max_payload
-		self.__name = name
+    """A strategic bomber card used as a reusable warhead carrier."""
 
-	def __str__(self):
-		if self.__name == "bomber":
-			return "bomber(%u)"%self.max_payload
-		else:
-			return self.__name
-	
-	def __repr__(self):
-		return "%s(%u/%u)"%(self.__name, self.payload, self.max_payload)
+    def __init__(
+        self, max_payload: int = 10, name: str = "bomber"
+    ) -> None:
+        """Initialise the bomber."""
+        self.max_payload = max_payload
+        self.payload = max_payload
+        self.__name = name
 
-	def is_weapon(self):
-		return True
+    def __str__(self) -> str:
+        if self.__name == "bomber":
+            return f"bomber({self.max_payload})"
+        return self.__name
 
-	def use_warhead(self, warhead, g, p, tgt):
-		# Check weapon yield
-		if self.payload < warhead.megatons:
-			p.weapon = None
-			g.game_msg(" > %s wastes %uM warhead on %uM bomber"%(
-					p.name, warhead.megatons, self.payload))
-			return
+    def __repr__(self) -> str:
+        return f"{self.__name}({self.payload}/{self.max_payload})"
 
-		self.payload = self.payload - warhead.megatons
+    def is_weapon(self) -> bool:
+        """Return True - bombers are delivery systems."""
+        return True
 
-		# Weapon firing commences, this is war
-		g.transition(GAME_STATE_WAR)
+    def use_warhead(
+        self, warhead: Warhead, g: game, p: player, tgt: player
+    ) -> None:
+        """Drop the warhead from this bomber onto the target."""
+        if self.payload < warhead.megatons:
+            p.weapon = None
+            g.game_msg(
+                f" > {p.name} wastes {warhead.megatons}M warhead "
+                f"on {self.payload}M bomber"
+            )
+            return
 
-		g.game_msg(" > bomber: %s fires %u megaton warhead at %s"%(
-				p.name, warhead.megatons, tgt.name))
+        self.payload -= warhead.megatons
+        g.transition(GAME_STATE_WAR)
+        g.game_msg(
+            f" > bomber: {p.name} fires {warhead.megatons} megaton "
+            f"warhead at {tgt.name}"
+        )
+        warhead.calc_fallout(tgt)
 
-		# Do the damage
-		deaths = warhead.calc_fallout(tgt)
+        if self.payload <= 0:
+            p.weapon = None
 
-		if self.payload <= 0:
-			p.weapon = None
-
-	def dequeue(self, g, p, tgt = None):
-		p.weapon = self
-		g.game_msg(" > %s deploys bomber %s"%(p.name, self))
+    def dequeue(self, g: game, p: player, tgt: player | None = None) -> None:
+        """Deploy this bomber (set it as the player active weapon)."""
+        p.weapon = self
+        g.game_msg(f" > {p.name} deploys bomber {self}")

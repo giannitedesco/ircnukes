@@ -1,46 +1,101 @@
-GAME_STATE_INIT		= 0
-GAME_STATE_PEACE 	= 1
-GAME_STATE_WAR 		= 2
-GAME_STATE_OVER 	= 3
+"""Global constants and exceptions for the Nuclear War card game."""
 
-# Player starts out as alive, is this way until population hits 0
-# if it's war they go to retaliation state until they use !done then
-# they go to dead state, if it's peace they go straight to dead
-# skipping retaliation altogether
-PLAYER_STATE_ALIVE	= 1
-PLAYER_STATE_RETALIATE	= 2
-PLAYER_STATE_DEAD	= 3
+from __future__ import annotations
 
-CARD_STACK_LEN		= 2
+from typing import TYPE_CHECKING
 
-NUKE_YIELD_10MT 	= 10
-NUKE_YIELD_15MT		= 15
-NUKE_YIELD_20MT 	= 20
-NUKE_YIELD_40MT		= 40
-NUKE_YIELD_50MT 	= 50
-NUKE_YIELD_75MT		= 75
-NUKE_YIELD_100MT 	= 100
-NUKE_YIELD_200MT	= 200
+if TYPE_CHECKING:
+    from .game import game
+    from .player import player
+
+# Game state constants
+GAME_STATE_INIT: int = 0
+"""Game has been created but not yet started."""
+
+GAME_STATE_PEACE: int = 1
+"""Game is in the peace phase."""
+
+GAME_STATE_WAR: int = 2
+"""Game is in the war phase."""
+
+GAME_STATE_OVER: int = 3
+"""Game has ended."""
+
+# Player state constants
+PLAYER_STATE_ALIVE: int = 1
+"""Player is alive and active."""
+
+PLAYER_STATE_RETALIATE: int = 2
+"""Player is dead but may still retaliate."""
+
+PLAYER_STATE_DEAD: int = 3
+"""Player is fully eliminated."""
+
+CARD_STACK_LEN: int = 2
+"""Number of cards in a player's queue."""
+
+# Nuclear yield constants (megatons)
+NUKE_YIELD_10MT: int = 10
+NUKE_YIELD_15MT: int = 15
+NUKE_YIELD_20MT: int = 20
+NUKE_YIELD_40MT: int = 40
+NUKE_YIELD_50MT: int = 50
+NUKE_YIELD_75MT: int = 75
+NUKE_YIELD_100MT: int = 100
+NUKE_YIELD_200MT: int = 200
+
 
 class IllegalMoveError(Exception):
-	def __init__(self, g, p, desc):
-		self.game = g
-		self.player = p
-		self.desc = desc
-		self.message = desc
+    """Raised when a player attempts an illegal game move."""
+
+    def __init__(self, g: game | None, p: player | None, desc: str) -> None:
+        """Initialise the error with game context and description.
+
+        Args:
+            g: The game instance in which the error occurred.
+            p: The player who attempted the illegal move.
+            desc: Human-readable description of why the move is illegal.
+        """
+        super().__init__(desc)
+        self.game = g
+        self.player = p
+        self.desc = desc
+
 
 class GameLogicError(Exception):
-	def __init__(self, g, desc, player=None):
-		self.game = g
-		self.player = player
-		self.desc = desc
-		self.message = desc
+    """Raised when a game logic violation occurs."""
+
+    def __init__(
+        self, g: game | None, desc: str, player: player | None = None
+    ) -> None:
+        """Initialise the error with game context and description.
+
+        Args:
+            g: The game instance in which the error occurred.
+            desc: Human-readable description of the logic error.
+            player: Optional player associated with the error.
+        """
+        super().__init__(desc)
+        self.game = g
+        self.player = player
+        self.desc = desc
+
 
 class GameOverMan(Exception):
-	def __init__(self, g, winner=None):
-		self.game = g
-		self.winner = winner
-		if self.winner != None:
-			self.message = "Game over: winner %s"%winner.name
-		else:
-			self.message = "Game over"
+    """Raised when the game ends, optionally with a winner."""
+
+    def __init__(self, g: game, winner: player | None = None) -> None:
+        """Initialise the game-over exception.
+
+        Args:
+            g: The game instance that has ended.
+            winner: The winning player, or None if it was mutual assured
+                destruction.
+        """
+        if winner is not None:
+            msg = f"Game over: winner {winner.name}"
+        else:
+            msg = "Game over"
+        super().__init__(msg)
+        self.game = g
+        self.winner = winner
