@@ -233,7 +233,7 @@ class TestCards:
     def test_missile_deploys_as_weapon(self) -> None:
         g = _make_started_game("alice", "bob")
         alice = g.get_player("alice")
-        # Give alice a missile then a warhead in her queue (LIFO queue)
+        # Give alice a missile then a warhead in her queue (FIFO queue)
         m = missile(20)
         w = warhead(10)
         alice.hand.insert(0, m)

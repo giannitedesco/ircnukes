@@ -85,8 +85,9 @@ class warhead(card):
             g.game_msg(" > Hit nuclear stockpile, triple yield")
             b *= 3
             if self.megatons == NUKE_YIELD_100MT:
+                assert g.cur is not None
                 g.game_msg(
-                    f" > {g.cur.name}, you blew up the world, "  # type: ignore[union-attr]
+                    f" > {g.cur.name}, you blew up the world, "
                     "it's your job to tidy the mess!"
                 )
                 g.apocalypse()
