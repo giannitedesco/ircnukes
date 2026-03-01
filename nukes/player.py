@@ -27,7 +27,7 @@ class Player:
         self.hand: list[Any] = []
         self.population: int = 0
         self.card_stack: list[Any] = []
-        self.weapon: Any = None
+        self.weapon: Any | None = None
         self.game: "Game | None" = None
         self.state: PlayerState = PlayerState.ALIVE
         self.missturns: int = 0

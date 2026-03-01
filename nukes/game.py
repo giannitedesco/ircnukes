@@ -157,6 +157,8 @@ class Game:
 
     def __get_pop(self) -> int:
         result: int = self.__popcards.deal_card()
+        if result is None:
+            raise GameLogicError(self, "Population deck is empty")
         return result
 
     def deal_card(self) -> object:
