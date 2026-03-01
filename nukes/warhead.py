@@ -13,6 +13,7 @@ from .card import Card
 from .globals import (
     NukeYield,
     IllegalMoveError,
+    GameLogicError,
     PLAYER_STATE_ALIVE,
 )
 
@@ -43,7 +44,9 @@ class Warhead(Card):
         r = random.randint(0, 16)  # noqa: S311
         g = tgt.game
         if g is None:
-            return b
+            raise GameLogicError(
+                None, "calc_fallout called for a player not in a game"
+            )
         m = False
 
         if r < 3:

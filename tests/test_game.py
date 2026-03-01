@@ -103,9 +103,11 @@ class TestPlayer:
         assert p.card_stack == []
         assert p.weapon is None
 
-    def test_terminate_no_game(self) -> None:
+    def test_kill_no_game(self) -> None:
         p = Player("alice")
-        p.terminate()  # should not raise
+        p.terminate()  # should not raise when game is None
+        # Player has no game; state stays ALIVE since nothing happened
+        assert p.state == PLAYER_STATE_ALIVE
 
 
 # ---------------------------------------------------------------------------
