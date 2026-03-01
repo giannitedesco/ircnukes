@@ -7,7 +7,7 @@ import sys
 from typing import Optional
 
 import nukes
-from ircnukes import ircnukes
+from ircnukes import IrcNukes
 from nukebot import CHAN, DECK
 
 
@@ -22,7 +22,7 @@ class FakeConn:
 
 
 _conn = FakeConn()
-_game: Optional[ircnukes] = None
+_game: Optional[IrcNukes] = None
 
 
 def _barf(msg: str) -> None:
@@ -49,7 +49,7 @@ def cmd_pub(
 
     if cmd == "create":
         try:
-            _game = ircnukes(_privmsg, chan, DECK)
+            _game = IrcNukes(_privmsg, chan, DECK)
         except nukes.GameLogicError as e:
             print(f"error: {DECK}: {e.desc}")
             return
@@ -70,7 +70,7 @@ def cmd_pub(
         return
 
     if cmd == "help":
-        tmp = ircnukes(None, None)
+        tmp = IrcNukes(None, None)
         cmds = tmp.irc_list_cmds()
         cmds.extend(["creategame", "savegame", "loadgame", "listgames"])
         print(f"Commands: {' '.join(cmds)}")
@@ -108,7 +108,7 @@ def cmd_priv(nick: str, text: str) -> None:
         return
 
     if arg[0] == "help":
-        tmp = ircnukes(None, None)
+        tmp = IrcNukes(None, None)
         cmds = tmp.irc_list_pcmds()
         print(f"Commands: {' '.join(cmds)}")
         return

@@ -6,61 +6,44 @@ import random
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .player import player
-    from .game import game
+    from .player import Player
+    from .game import Game
 
-from .card import card
+from .card import Card
 from .globals import (
-    NUKE_YIELD_10MT,
-    NUKE_YIELD_15MT,
-    NUKE_YIELD_20MT,
-    NUKE_YIELD_40MT,
-    NUKE_YIELD_50MT,
-    NUKE_YIELD_75MT,
-    NUKE_YIELD_100MT,
-    NUKE_YIELD_200MT,
+    NukeYield,
     IllegalMoveError,
     PLAYER_STATE_ALIVE,
 )
 
 
-_BODYCOUNTS: dict[int, int] = {
-    NUKE_YIELD_10MT: 2,
-    NUKE_YIELD_15MT: 3,
-    NUKE_YIELD_20MT: 5,
-    NUKE_YIELD_40MT: 10,
-    NUKE_YIELD_50MT: 15,
-    NUKE_YIELD_75MT: 20,
-    NUKE_YIELD_100MT: 25,
-    NUKE_YIELD_200MT: 50,
-}
-
-
-class warhead(card):
+class Warhead(Card):
     """A nuclear warhead card."""
 
-    def __init__(self, megatons: int = NUKE_YIELD_10MT) -> None:
+    def __init__(self, megatons: int = NukeYield.MT10) -> None:
         """Initialise a warhead with the given yield."""
-        if megatons not in _BODYCOUNTS:
+        try:
+            self.megatons: NukeYield = NukeYield(megatons)
+        except ValueError:
             raise ValueError(f"BadNukeYield: {megatons}")
-        self.megatons = megatons
 
     def __str__(self) -> str:
-        return f"w{self.megatons}"
+        return f"w{self.megatons.value}"
 
     def __repr__(self) -> str:
-        return f"warhead({self.megatons})"
+        return f"warhead({self.megatons.value})"
 
     def is_weapon(self) -> bool:
         """Return True - warheads are weapons."""
         return True
 
-    def calc_fallout(self, tgt: player) -> int:
+    def calc_fallout(self, tgt: "Player") -> int:
         """Calculate and apply the fallout damage to the target."""
-        b = _BODYCOUNTS[self.megatons]
-        r = random.randint(0, 16)
+        b = self.megatons.popdead
+        r = random.randint(0, 16)  # noqa: S311
         g = tgt.game
-        assert g is not None
+        if g is None:
+            return b
         m = False
 
         if r < 3:
@@ -84,8 +67,10 @@ class warhead(card):
         elif r < 11:
             g.game_msg(" > Hit nuclear stockpile, triple yield")
             b *= 3
-            if self.megatons == NUKE_YIELD_100MT:
-                assert g.cur is not None
+            if (
+                self.megatons == NukeYield.MT100
+                and g.cur is not None
+            ):
                 g.game_msg(
                     f" > {g.cur.name}, you blew up the world, "
                     "it's your job to tidy the mess!"
@@ -106,7 +91,9 @@ class warhead(card):
 
         return b
 
-    def dequeue(self, g: game, p: player, tgt: player | None = None) -> None:
+    def dequeue(
+        self, g: "Game", p: "Player", tgt: "Player | None" = None
+    ) -> None:
         """Execute the warhead card."""
         if tgt is None:
             raise IllegalMoveError(g, p, "Must target warhead")
@@ -117,8 +104,12 @@ class warhead(card):
 
         if p.weapon is None:
             g.game_msg(
-                f" > {p.name} dumps {self.megatons}M warhead"
+                f" > {p.name} dumps {self.megatons.value}M warhead"
             )
             return
 
         p.weapon.use_warhead(self, g, p, tgt)
+
+
+# Backward-compatible alias
+warhead = Warhead

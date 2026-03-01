@@ -1,61 +1,98 @@
-"""Global constants and exceptions for the Nuclear War card game."""
+"""Global constants, enumerations, and exceptions for the Nuclear War card game."""
 
 from __future__ import annotations
 
+from enum import IntEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .game import game
-    from .player import player
+    from .game import Game
+    from .player import Player
 
-# Game state constants
-GAME_STATE_INIT: int = 0
-"""Game has been created but not yet started."""
 
-GAME_STATE_PEACE: int = 1
-"""Game is in the peace phase."""
+class GameState(IntEnum):
+    """Enumeration of possible game phase states."""
 
-GAME_STATE_WAR: int = 2
-"""Game is in the war phase."""
+    INIT = 0
+    PEACE = 1
+    WAR = 2
+    OVER = 3
 
-GAME_STATE_OVER: int = 3
-"""Game has ended."""
 
-# Player state constants
-PLAYER_STATE_ALIVE: int = 1
-"""Player is alive and active."""
+class PlayerState(IntEnum):
+    """Enumeration of possible player lifecycle states."""
 
-PLAYER_STATE_RETALIATE: int = 2
-"""Player is dead but may still retaliate."""
+    ALIVE = 1
+    RETALIATE = 2
+    DEAD = 3
 
-PLAYER_STATE_DEAD: int = 3
-"""Player is fully eliminated."""
+
+_YIELD_POPDEAD: dict[int, int] = {
+    10: 2,
+    15: 3,
+    20: 5,
+    40: 10,
+    50: 15,
+    75: 20,
+    100: 25,
+    200: 50,
+}
+
+
+class NukeYield(IntEnum):
+    """Nuclear warhead yield in megatons with associated kill data."""
+
+    MT10 = 10
+    MT15 = 15
+    MT20 = 20
+    MT40 = 40
+    MT50 = 50
+    MT75 = 75
+    MT100 = 100
+    MT200 = 200
+
+    @property
+    def popdead(self) -> int:
+        """Base population millions killed by a direct hit at this yield."""
+        return _YIELD_POPDEAD[self.value]
+
+
+# ---------------------------------------------------------------------------
+# Miscellaneous constants
+# ---------------------------------------------------------------------------
 
 CARD_STACK_LEN: int = 2
 """Number of cards in a player's queue."""
 
-# Nuclear yield constants (megatons)
-NUKE_YIELD_10MT: int = 10
-NUKE_YIELD_15MT: int = 15
-NUKE_YIELD_20MT: int = 20
-NUKE_YIELD_40MT: int = 40
-NUKE_YIELD_50MT: int = 50
-NUKE_YIELD_75MT: int = 75
-NUKE_YIELD_100MT: int = 100
-NUKE_YIELD_200MT: int = 200
+# ---------------------------------------------------------------------------
+# Backward-compatible aliases
+# ---------------------------------------------------------------------------
+
+GAME_STATE_INIT = GameState.INIT
+GAME_STATE_PEACE = GameState.PEACE
+GAME_STATE_WAR = GameState.WAR
+GAME_STATE_OVER = GameState.OVER
+
+PLAYER_STATE_ALIVE = PlayerState.ALIVE
+PLAYER_STATE_RETALIATE = PlayerState.RETALIATE
+PLAYER_STATE_DEAD = PlayerState.DEAD
+
+NUKE_YIELD_10MT = NukeYield.MT10
+NUKE_YIELD_15MT = NukeYield.MT15
+NUKE_YIELD_20MT = NukeYield.MT20
+NUKE_YIELD_40MT = NukeYield.MT40
+NUKE_YIELD_50MT = NukeYield.MT50
+NUKE_YIELD_75MT = NukeYield.MT75
+NUKE_YIELD_100MT = NukeYield.MT100
+NUKE_YIELD_200MT = NukeYield.MT200
 
 
 class IllegalMoveError(Exception):
     """Raised when a player attempts an illegal game move."""
 
-    def __init__(self, g: game | None, p: player | None, desc: str) -> None:
-        """Initialise the error with game context and description.
-
-        Args:
-            g: The game instance in which the error occurred.
-            p: The player who attempted the illegal move.
-            desc: Human-readable description of why the move is illegal.
-        """
+    def __init__(
+        self, g: "Game | None", p: "Player | None", desc: str
+    ) -> None:
         super().__init__(desc)
         self.game = g
         self.player = p
@@ -66,15 +103,8 @@ class GameLogicError(Exception):
     """Raised when a game logic violation occurs."""
 
     def __init__(
-        self, g: game | None, desc: str, player: player | None = None
+        self, g: "Game | None", desc: str, player: "Player | None" = None
     ) -> None:
-        """Initialise the error with game context and description.
-
-        Args:
-            g: The game instance in which the error occurred.
-            desc: Human-readable description of the logic error.
-            player: Optional player associated with the error.
-        """
         super().__init__(desc)
         self.game = g
         self.player = player
@@ -84,14 +114,7 @@ class GameLogicError(Exception):
 class GameOverMan(Exception):
     """Raised when the game ends, optionally with a winner."""
 
-    def __init__(self, g: game, winner: player | None = None) -> None:
-        """Initialise the game-over exception.
-
-        Args:
-            g: The game instance that has ended.
-            winner: The winning player, or None if it was mutual assured
-                destruction.
-        """
+    def __init__(self, g: "Game", winner: "Player | None" = None) -> None:
         if winner is not None:
             msg = f"Game over: winner {winner.name}"
         else:

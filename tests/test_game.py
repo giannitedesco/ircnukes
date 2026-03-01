@@ -21,19 +21,19 @@ from nukes.globals import (
     GameLogicError,
     GameOverMan,
 )
-from nukes.player import player
-from nukes.warhead import warhead
-from nukes.missile import missile
-from nukes.bomber import bomber
-from nukes.propaganda import propaganda
-from nukes.deck import deck
+from nukes.player import Player
+from nukes.warhead import Warhead
+from nukes.missile import Missile
+from nukes.bomber import Bomber
+from nukes.propaganda import Propaganda
+from nukes.deck import Deck
 
 
 # ---------------------------------------------------------------------------
 # Minimal concrete game subclass for testing
 # ---------------------------------------------------------------------------
 
-class _TestGame(nukes.game):
+class _TestGame(nukes.Game):
     """Concrete game subclass that captures messages for testing."""
 
     def __init__(self, name: str = "test") -> None:
@@ -44,13 +44,13 @@ class _TestGame(nukes.game):
     def demilitarize(self) -> None:
         self.messages.append("PEACE")
 
-    def pass_control(self, p: nukes.player) -> None:
+    def pass_control(self, p: nukes.Player) -> None:
         self.messages.append(f"TURN:{p.name}")
 
     def game_msg(self, msg: str) -> None:
         self.messages.append(msg)
 
-    def player_msg(self, p: nukes.player, msg: str) -> None:
+    def player_msg(self, p: nukes.Player, msg: str) -> None:
         self.player_messages.append((p.name, msg))
 
     def war(self) -> None:
@@ -61,7 +61,7 @@ def _make_game_with_players(*nicks: str) -> _TestGame:
     """Create a test game and add players without starting."""
     g = _TestGame()
     for nick in nicks:
-        p = player(nick)
+        p = Player(nick)
         g.add_player(p)
     return g
 
@@ -79,7 +79,7 @@ def _make_started_game(*nicks: str) -> _TestGame:
 
 class TestPlayer:
     def test_initial_state(self) -> None:
-        p = player("alice")
+        p = Player("alice")
         assert p.name == "alice"
         assert p.population == 0
         assert p.hand == []
@@ -87,25 +87,25 @@ class TestPlayer:
         assert p.state == PLAYER_STATE_ALIVE
 
     def test_str_repr(self) -> None:
-        p = player("bob")
+        p = Player("bob")
         assert str(p) == "player(bob)"
         assert repr(p) == "player('bob')"
 
     def test_cards_to_hand(self) -> None:
-        p = player("alice")
-        w = warhead(10)
-        m = missile(10)
+        p = Player("alice")
+        w = Warhead(10)
+        m = Missile(10)
         p.hand = [w]
         p.card_stack = [m]
-        p.weapon = warhead(20)
+        p.weapon = Warhead(20)
         p.cards_to_hand()
         assert len(p.hand) == 3
         assert p.card_stack == []
         assert p.weapon is None
 
     def test_kill_no_game(self) -> None:
-        p = player("alice")
-        p.kill()  # should not raise
+        p = Player("alice")
+        p.terminate()  # should not raise
 
 
 # ---------------------------------------------------------------------------
@@ -114,27 +114,27 @@ class TestPlayer:
 
 class TestDeck:
     def test_empty_deck_returns_none(self) -> None:
-        d = deck("test")
+        d = Deck("test")
         assert d.deal_card() is None
 
     def test_add_and_deal(self) -> None:
-        d = deck("test")
-        d.add_card(5, warhead, [10])
+        d = Deck("test")
+        d.add_card(5, Warhead, [10])
         card = d.deal_card()
         assert card is not None
-        assert isinstance(card, warhead)
+        assert isinstance(card, Warhead)
 
     def test_replenish(self) -> None:
-        d = deck("test")
-        d.add_card(1, warhead, [10])
+        d = Deck("test")
+        d.add_card(1, Warhead, [10])
         for _ in range(10):  # deal more than the max, should replenish
             c = d.deal_card()
             assert c is not None
 
     def test_len(self) -> None:
-        d = deck("test")
-        d.add_card(3, warhead, [10])
-        d.add_card(2, missile, [10])
+        d = Deck("test")
+        d.add_card(3, Warhead, [10])
+        d.add_card(2, Missile, [10])
         assert len(d) == 5
 
 
@@ -149,19 +149,19 @@ class TestGame:
 
     def test_add_player(self) -> None:
         g = _TestGame()
-        p = player("alice")
+        p = Player("alice")
         g.add_player(p)
         assert g.get_player("alice") is p
 
     def test_duplicate_player_raises(self) -> None:
         g = _TestGame()
-        g.add_player(player("alice"))
+        g.add_player(Player("alice"))
         with pytest.raises(GameLogicError):
-            g.add_player(player("alice"))
+            g.add_player(Player("alice"))
 
     def test_too_few_players_raises(self) -> None:
         g = _TestGame()
-        g.add_player(player("alice"))
+        g.add_player(Player("alice"))
         with pytest.raises(GameLogicError):
             g.commence()
 
@@ -204,29 +204,29 @@ class TestGame:
 class TestCards:
     def test_warhead_invalid_yield(self) -> None:
         with pytest.raises(ValueError):
-            warhead(999)
+            Warhead(999)
 
     def test_warhead_str_repr(self) -> None:
-        w = warhead(10)
+        w = Warhead(10)
         assert str(w) == "w10"
         assert repr(w) == "warhead(10)"
 
     def test_missile_str_repr(self) -> None:
-        m = missile(10, "polaris")
+        m = Missile(10, "polaris")
         assert str(m) == "polaris"
         assert repr(m) == "polaris(10)"
 
     def test_missile_default_str(self) -> None:
-        m = missile(20)
+        m = Missile(20)
         assert str(m) == "missile(20)"
 
     def test_bomber_str_repr(self) -> None:
-        b = bomber(50, "b70")
+        b = Bomber(50, "b70")
         assert str(b) == "b70"
         assert repr(b) == "b70(50/50)"
 
     def test_propaganda_str_repr(self) -> None:
-        p = propaganda(5)
+        p = Propaganda(5)
         assert str(p) == "p5"
         assert repr(p) == "propaganda(5)"
 
@@ -234,8 +234,8 @@ class TestCards:
         g = _make_started_game("alice", "bob")
         alice = g.get_player("alice")
         # Give alice a missile then a warhead in her queue (FIFO queue)
-        m = missile(20)
-        w = warhead(10)
+        m = Missile(20)
+        w = Warhead(10)
         alice.hand.insert(0, m)
         alice.queue_card("0")  # missile is first in queue
         alice.hand.insert(0, w)
@@ -251,21 +251,21 @@ class TestCards:
     def test_warhead_requires_target(self) -> None:
         g = _make_started_game("alice", "bob")
         alice = g.get_player("alice")
-        w = warhead(10)
+        w = Warhead(10)
         with pytest.raises(IllegalMoveError):
             w.dequeue(g, alice, None)
 
     def test_propaganda_requires_target_in_peace(self) -> None:
         g = _make_started_game("alice", "bob")
         alice = g.get_player("alice")
-        prop = propaganda(5)
+        prop = Propaganda(5)
         with pytest.raises(IllegalMoveError):
             prop.dequeue(g, alice, None)
 
     def test_propaganda_dumps_in_war(self) -> None:
         g = _make_started_game("alice", "bob")
         alice = g.get_player("alice")
-        prop = propaganda(5)
+        prop = Propaganda(5)
         g.transition(GAME_STATE_WAR)
         # Should not raise; just dump the card
         prop.dequeue(g, alice, None)
@@ -288,7 +288,7 @@ class TestExceptions:
 
     def test_game_over_man_with_winner(self) -> None:
         g = _TestGame()
-        p = player("winner")
+        p = Player("winner")
         exc = GameOverMan(g, p)
         assert exc.winner is p
         assert "winner" in str(exc)
@@ -306,7 +306,7 @@ class TestExceptions:
 
 class TestIrcNukes:
     def test_create_and_list_cmds(self) -> None:
-        from ircnukes import ircnukes as IrcNukes
+        from ircnukes import IrcNukes
         messages: list[str] = []
         def privmsg(tgt: str, msg: str) -> None:
             messages.append(f"{tgt}: {msg}")
@@ -317,7 +317,7 @@ class TestIrcNukes:
         assert "start" in cmds
 
     def test_list_pcmds(self) -> None:
-        from ircnukes import ircnukes as IrcNukes
+        from ircnukes import IrcNukes
         g = IrcNukes(None, None)
         pcmds = g.irc_list_pcmds()
         assert "hand" in pcmds
@@ -325,7 +325,7 @@ class TestIrcNukes:
         assert "push" in pcmds
 
     def test_join_game(self) -> None:
-        from ircnukes import ircnukes as IrcNukes
+        from ircnukes import IrcNukes
         messages: list[str] = []
         def privmsg(tgt: str, msg: str) -> None:
             messages.append(msg)
@@ -334,7 +334,7 @@ class TestIrcNukes:
         assert any("alice" in m for m in messages)
 
     def test_unknown_command(self) -> None:
-        from ircnukes import ircnukes as IrcNukes
+        from ircnukes import IrcNukes
         messages: list[str] = []
         def privmsg(tgt: str, msg: str) -> None:
             messages.append(msg)
@@ -346,7 +346,7 @@ class TestIrcNukes:
         assert any("not known" in m for m in messages)
 
     def test_nick_change(self) -> None:
-        from ircnukes import ircnukes as IrcNukes
+        from ircnukes import IrcNukes
         messages: list[str] = []
         def privmsg(tgt: str, msg: str) -> None:
             messages.append(msg)

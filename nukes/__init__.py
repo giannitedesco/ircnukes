@@ -1,6 +1,9 @@
 """Nuclear War card game engine."""
 
 from .globals import (
+    GameState,
+    PlayerState,
+    NukeYield,
     GAME_STATE_INIT,
     GAME_STATE_PEACE,
     GAME_STATE_WAR,
@@ -21,15 +24,27 @@ from .globals import (
     GameLogicError,
     GameOverMan,
 )
-from .game import game
-from .player import player
-from .card import card
-from .propaganda import propaganda
-from .missile import missile
-from .warhead import warhead
-from .bomber import bomber
+from .game import Game
+from .player import Player
+from .card import Card
+from .propaganda import Propaganda
+from .missile import Missile
+from .warhead import Warhead
+from .bomber import Bomber
+
+# Backward-compatible lowercase aliases
+game = Game
+player = Player
+card = Card
+propaganda = Propaganda
+missile = Missile
+warhead = Warhead
+bomber = Bomber
 
 __all__ = [
+    "GameState",
+    "PlayerState",
+    "NukeYield",
     "GAME_STATE_INIT",
     "GAME_STATE_PEACE",
     "GAME_STATE_WAR",
@@ -49,6 +64,14 @@ __all__ = [
     "IllegalMoveError",
     "GameLogicError",
     "GameOverMan",
+    "Game",
+    "Player",
+    "Card",
+    "Propaganda",
+    "Missile",
+    "Warhead",
+    "Bomber",
+    # Backward-compat aliases
     "game",
     "player",
     "card",

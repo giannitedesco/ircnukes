@@ -12,8 +12,8 @@ from irc.strings import lower as irc_lower  # type: ignore[import-untyped]
 PrivmsgFn = Callable[[str, str], None]
 
 
-class ircnukes(nukes.game):
-    """A :class:`nukes.game` sub-class wired to an IRC connection."""
+class IrcNukes(nukes.Game):
+    """A :class:`nukes.Game` sub-class wired to an IRC connection."""
 
     def __init__(
         self,
@@ -31,7 +31,7 @@ class ircnukes(nukes.game):
         self.__chan: str | None = None
         self.dirty: bool = False
         self.save_done(conn, chan)
-        nukes.game.__init__(self, chan or "nukes", deck)
+        nukes.Game.__init__(self, chan or "nukes", deck)
 
     def save_prepare(self) -> None:
         """Prepare the object for pickling."""
@@ -71,18 +71,21 @@ class ircnukes(nukes.game):
         self.__chan = chan
         self.dirty = False
 
-    def pass_control(self, p: nukes.player) -> None:
+    def pass_control(self, p: nukes.Player) -> None:
         """Announce whose turn it is."""
-        assert p.state != nukes.PLAYER_STATE_DEAD
-        if p.state == nukes.PLAYER_STATE_ALIVE:
+        if p.state == nukes.PlayerState.DEAD:
+            raise nukes.IllegalMoveError(
+                self, p, "pass_control called for dead player"
+            )
+        if p.state == nukes.PlayerState.ALIVE:
             self.game_msg(f"{p.name} it's your go!")
             return
         self.game_msg(f"{p.name}, it's time for final retaliation!")
         self.game_msg(f"{p.name} has: {p.hand}")
 
-    def deal_in_player(self, p: nukes.player) -> None:
+    def deal_in_player(self, p: nukes.Player) -> None:
         """Deal cards to a player and notify them of their starting hand."""
-        nukes.game.deal_in_player(self, p)
+        nukes.Game.deal_in_player(self, p)
         self.__get_pop(p)
         self.__get_hand(p)
         self.__get_queue(p)
@@ -99,9 +102,9 @@ class ircnukes(nukes.game):
         except nukes.GameLogicError as e:
             self.game_msg(f"Error renaming {old} to {new}: {e.desc}")
 
-    def add_player(self, p: nukes.player) -> None:
+    def add_player(self, p: nukes.Player) -> None:
         """Add a player to the game lobby."""
-        nukes.game.add_player(self, p)
+        nukes.Game.add_player(self, p)
 
     def war(self) -> None:
         """Announce war in the IRC channel."""
@@ -113,17 +116,17 @@ class ircnukes(nukes.game):
             "\x02\x033,99Peace time\x02\x03, re-create your queues!"
         )
 
-    def player_dead(self, p: nukes.player) -> None:
+    def player_dead(self, p: nukes.Player) -> None:
         """Announce a player's death and advance the game state."""
-        if self.state() == nukes.GAME_STATE_INIT:
+        if self.state() == nukes.GameState.INIT:
             self.game_msg(f"{p.name} was deterred and ran home crying")
-        elif self.state() == nukes.GAME_STATE_WAR:
+        elif self.state() == nukes.GameState.WAR:
             self.game_msg(f"{p.name} reduced to rubble.. loser")
         else:
             self.game_msg(f"{p.name} died from a peace offensive")
-        nukes.game.player_dead(self, p)
+        nukes.Game.player_dead(self, p)
 
-    def player_msg(self, p: nukes.player, msg: str) -> None:
+    def player_msg(self, p: nukes.Player, msg: str) -> None:
         """Send a private message to a player via IRC."""
         if self.__privmsg is not None:
             self.__privmsg(p.name, msg)
@@ -133,9 +136,9 @@ class ircnukes(nukes.game):
         if self.__privmsg is not None and self.__chan is not None:
             self.__privmsg(self.__chan, msg)
 
-    def get_player(self, name: str) -> nukes.player:
+    def get_player(self, name: str) -> nukes.Player:
         """Return a player by IRC nick (case-insensitive lookup)."""
-        return nukes.game.get_player(self, irc_lower(name))
+        return nukes.Game.get_player(self, irc_lower(name))
 
     # ------------------------------------------------------------------
     # Private message commands
@@ -143,7 +146,7 @@ class ircnukes(nukes.game):
 
     def __get_pop(
         self,
-        p: nukes.player,
+        p: nukes.Player,
         cmd: str = "",
         arg: list[str] | None = None,
     ) -> None:
@@ -152,7 +155,7 @@ class ircnukes(nukes.game):
 
     def __get_hand(
         self,
-        p: nukes.player,
+        p: nukes.Player,
         cmd: str = "",
         arg: list[str] | None = None,
     ) -> None:
@@ -161,7 +164,7 @@ class ircnukes(nukes.game):
 
     def __get_queue(
         self,
-        p: nukes.player,
+        p: nukes.Player,
         cmd: str = "",
         arg: list[str] | None = None,
     ) -> None:
@@ -173,7 +176,7 @@ class ircnukes(nukes.game):
 
     def __push_card(
         self,
-        p: nukes.player,
+        p: nukes.Player,
         cmd: str = "",
         arg: list[str] | None = None,
     ) -> None:
@@ -190,7 +193,7 @@ class ircnukes(nukes.game):
 
     def __startgame(
         self,
-        p: nukes.player,
+        p: nukes.Player,
         cmd: str = "",
         arg: list[str] | None = None,
     ) -> None:
@@ -200,12 +203,12 @@ class ircnukes(nukes.game):
 
     def __suicide(
         self,
-        p: nukes.player,
+        p: nukes.Player,
         cmd: str = "",
         arg: list[str] | None = None,
     ) -> None:
         """Leave a game at any time."""
-        p.kill(suicide=True)
+        p.terminate(suicide=True)
         self.dirty = True
 
     def __joingame(
@@ -215,20 +218,20 @@ class ircnukes(nukes.game):
         args: list[str] | None = None,
     ) -> None:
         """Join a game that has been created."""
-        p = nukes.player(nick)
+        p = nukes.Player(nick)
         self.add_player(p)
         self.game_msg(f"{p} joins the game")
         self.dirty = True
 
     def __flip(
         self,
-        p: nukes.player,
+        p: nukes.Player,
         cmd: str = "",
         arg: list[str] | None = None,
     ) -> None:
         """Flip the first card in your queue when it's your turn."""
         if arg and len(arg) >= 1:
-            tgt: nukes.player | None = self.get_player(arg[0])
+            tgt: nukes.Player | None = self.get_player(arg[0])
         else:
             tgt = None
 
@@ -240,14 +243,14 @@ class ircnukes(nukes.game):
 
     def __use(
         self,
-        p: nukes.player,
+        p: nukes.Player,
         cmd: str = "",
         arg: list[str] | None = None,
     ) -> None:
         """Flip any card in your hand during final retaliation."""
         if arg is None or len(arg) < 1:
             raise nukes.IllegalMoveError(self, p, "No card specified")
-        tgt: nukes.player | None
+        tgt: nukes.Player | None
         if len(arg) >= 2:
             tgt = self.get_player(arg[1])
         else:
@@ -257,7 +260,7 @@ class ircnukes(nukes.game):
 
     def __done(
         self,
-        p: nukes.player,
+        p: nukes.Player,
         cmd: str = "",
         arg: list[str] | None = None,
     ) -> None:
@@ -275,19 +278,19 @@ class ircnukes(nukes.game):
     ) -> None:
         """View game or player status."""
         state_labels = {
-            nukes.PLAYER_STATE_ALIVE: "alive",
-            nukes.PLAYER_STATE_RETALIATE: "retaliating",
-            nukes.PLAYER_STATE_DEAD: "dead",
+            nukes.PlayerState.ALIVE: "alive",
+            nukes.PlayerState.RETALIATE: "retaliating",
+            nukes.PlayerState.DEAD: "dead",
         }
 
-        if self.state() == nukes.GAME_STATE_PEACE:
+        if self.state() == nukes.GameState.PEACE:
             self.game_msg("\x02\x033,99Peace time\x03:\x02")
-        elif self.state() == nukes.GAME_STATE_WAR:
+        elif self.state() == nukes.GameState.WAR:
             self.game_msg("\x02\x034,99War time\x03:\x02")
         else:
             self.game_msg("Game status:")
 
-        players: list[nukes.player]
+        players: list[nukes.Player]
         if arg and len(arg) >= 1:
             players = [self.get_player(name) for name in arg]
         else:
@@ -342,3 +345,7 @@ class ircnukes(nukes.game):
     def irc_list_pcmds(self) -> list[str]:
         """Return all available private-message command names."""
         return list(self.__pcmd.keys())
+
+
+# Backward-compatible alias
+ircnukes = IrcNukes

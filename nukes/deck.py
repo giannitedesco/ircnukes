@@ -9,42 +9,19 @@ from .globals import GameLogicError
 
 
 class _DeckCard:
-    """Internal representation of a card type in the deck.
-
-    Attributes:
-        cnt: Current count of this card type remaining.
-        max: Maximum count of this card type in a full deck.
-        cls: The card class to instantiate.
-        args: Positional arguments to pass when instantiating the card.
-    """
+    """Internal representation of a card type in the deck."""
 
     def __init__(self, max_cnt: int, cls: type[Any], args: list[Any]) -> None:
-        """Initialise a deck card entry.
-
-        Args:
-            max_cnt: Maximum number of this card in one full deck cycle.
-            cls: The card class.
-            args: Arguments for the card constructor.
-        """
         self.cnt = max_cnt
         self.max = max_cnt
         self.cls = cls
         self.args = args
 
 
-class deck:
-    """A shuffled, replenishing deck of game cards.
-
-    When all cards have been dealt the deck is automatically refilled
-    with the original complement so dealing can continue indefinitely.
-    """
+class Deck:
+    """A shuffled, replenishing deck of game cards."""
 
     def __init__(self, name: str) -> None:
-        """Initialise an empty deck.
-
-        Args:
-            name: A human-readable name for this deck (used in repr).
-        """
         self.__name = name
         self.__cards: list[_DeckCard] = []
 
@@ -55,7 +32,6 @@ class deck:
         return f"deck({self.__name})"
 
     def __replenish(self) -> None:
-        """Refill the deck by restoring all card counts to their maximum."""
         for x in self.__cards:
             x.cnt = x.max
 
@@ -63,13 +39,7 @@ class deck:
         return sum(x.cnt for x in self.__cards)
 
     def deal_card(self) -> Any:
-        """Deal a single card at random from the deck.
-
-        The deck is automatically replenished when empty.
-
-        Returns:
-            A new card instance, or None if the deck has no card types.
-        """
+        """Deal a single card at random from the deck."""
         if not self.__cards:
             return None
 
@@ -78,7 +48,7 @@ class deck:
             self.__replenish()
             ds = len(self)
 
-        r = random.randint(0, ds - 1)
+        r = random.randint(0, ds - 1)  # noqa: S311
         i = 0
         for c in self.__cards:
             i += c.cnt
@@ -88,25 +58,11 @@ class deck:
         return None  # unreachable, satisfies mypy
 
     def add_card(self, maxcnt: int, cls: type[Any], args: list[Any]) -> None:
-        """Register a card type with this deck.
-
-        Args:
-            maxcnt: Number of copies per full deck cycle.
-            cls: Card class to instantiate.
-            args: Constructor arguments for the card class.
-        """
+        """Register a card type with this deck."""
         self.__cards.append(_DeckCard(maxcnt, cls, args))
 
     @staticmethod
     def __do_args(item: str) -> int | str:
-        """Convert a token from the deck file to an int or leave as str.
-
-        Args:
-            item: A single whitespace-split token from a deck file line.
-
-        Returns:
-            An int if the token is numeric, otherwise the original string.
-        """
         try:
             return int(item)
         except ValueError:
@@ -115,20 +71,7 @@ class deck:
     def load_file(
         self, f: Any, clsmap: dict[str, type[Any]]
     ) -> None:
-        """Populate this deck from a deck-definition file.
-
-        Each non-comment, non-empty line must have the format::
-
-            <count> <card_type> [arg1 arg2 ...]
-
-        Args:
-            f: An open file-like object to read from.
-            clsmap: Mapping of card type name strings to card classes.
-
-        Raises:
-            GameLogicError: If the file contains malformed lines or unknown
-                card types.
-        """
+        """Populate this deck from a deck-definition file."""
         for line in f:
             ln = line.rstrip("\n")
             if not ln or ln[0] == "#":
@@ -145,3 +88,7 @@ class deck:
             cls = clsmap[parts[1]]
             args: list[int | str] = [self.__do_args(t) for t in parts[2:]]
             self.add_card(maxcnt, cls, args)
+
+
+# Backward-compatible alias
+deck = Deck

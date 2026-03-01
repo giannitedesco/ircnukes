@@ -17,7 +17,7 @@ import irc.client  # type: ignore[import-untyped]
 import irc.strings  # type: ignore[import-untyped]
 
 import nukes
-from ircnukes import ircnukes
+from ircnukes import IrcNukes
 
 # ---------------------------------------------------------------------------
 # Bot configuration (can be overridden via environment variables)
@@ -102,7 +102,7 @@ class NukeBot(irc.bot.SingleServerIRCBot):  # type: ignore[misc]
         """Initialise the bot and connect to the IRC server."""
         server = irc.bot.ServerSpec(HOST, PORT)
         super().__init__([server], NICK, NAME)
-        self._game: Optional[ircnukes] = None
+        self._game: Optional[IrcNukes] = None
         self._tbf = TokenBucket(2.0, 5.0)
         os.makedirs(LOGDIR, exist_ok=True)
 
@@ -128,7 +128,7 @@ class NukeBot(irc.bot.SingleServerIRCBot):  # type: ignore[misc]
         else:
             self.privmsg(CHAN, "No saved games")
 
-    def _save_game(self, game: ircnukes, name: str) -> None:
+    def _save_game(self, game: IrcNukes, name: str) -> None:
         """Pickle the current game to a gzip file."""
         entries = os.listdir(LOGDIR)
         if len(entries) > 128:
@@ -153,7 +153,7 @@ class NukeBot(irc.bot.SingleServerIRCBot):  # type: ignore[misc]
         game.save_done(self.privmsg, CHAN)
         self.privmsg(CHAN, f"game '{_path2name(path)}' saved to {path}")
 
-    def _load_game(self, name: str) -> Optional[ircnukes]:
+    def _load_game(self, name: str) -> Optional[IrcNukes]:
         """Unpickle a game from a gzip file."""
         path = _name2path(name)
         if path is None or _path2name(path) is None:
@@ -162,7 +162,7 @@ class NukeBot(irc.bot.SingleServerIRCBot):  # type: ignore[misc]
 
         try:
             with gzip.open(path, "rb") as f:
-                ret: ircnukes = pickle.load(f)
+                ret: IrcNukes = pickle.load(f)
         except OSError as e:
             self.privmsg(
                 CHAN, f"Reading from {path} failed: {e.strerror or str(e)}",
@@ -259,7 +259,7 @@ class NukeBot(irc.bot.SingleServerIRCBot):  # type: ignore[misc]
             return
 
         if arg[0] == "help":
-            tmp = ircnukes(None, None)
+            tmp = IrcNukes(None, None)
             cmds = tmp.irc_list_pcmds()
             self.privmsg(nick, f"Commands: {' '.join(cmds)}")
             return
@@ -289,7 +289,7 @@ class NukeBot(irc.bot.SingleServerIRCBot):  # type: ignore[misc]
 
         if cmd == "create":
             try:
-                self._game = ircnukes(self.privmsg, chan, DECK)
+                self._game = IrcNukes(self.privmsg, chan, DECK)
             except nukes.GameLogicError as e:
                 self.privmsg(chan, f"error: {DECK}: {e.desc}")
                 return
@@ -319,7 +319,7 @@ class NukeBot(irc.bot.SingleServerIRCBot):  # type: ignore[misc]
             return
 
         if cmd == "help":
-            tmp = ircnukes(None, None)
+            tmp = IrcNukes(None, None)
             cmds = tmp.irc_list_cmds()
             cmds.extend(["creategame", "savegame", "loadgame", "listgames"])
             self.privmsg(chan, f"Commands: {' '.join(cmds)}")

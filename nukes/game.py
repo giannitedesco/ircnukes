@@ -2,30 +2,26 @@
 
 from __future__ import annotations
 
-import random
-from typing import Any, Callable
-
 from .globals import (
-    CARD_STACK_LEN,
+    GameState,
+    GameLogicError,
+    GameOverMan,
     GAME_STATE_INIT,
     GAME_STATE_OVER,
-    GAME_STATE_PEACE,
     GAME_STATE_WAR,
     PLAYER_STATE_ALIVE,
     PLAYER_STATE_DEAD,
     PLAYER_STATE_RETALIATE,
-    GameLogicError,
-    GameOverMan,
 )
-from .player import player
-from .deck import deck
-from .propaganda import propaganda
-from .missile import missile
-from .bomber import bomber
-from .warhead import warhead
+from .player import Player
+from .deck import Deck
+from .propaganda import Propaganda
+from .missile import Missile
+from .bomber import Bomber
+from .warhead import Warhead
 
 
-class game:
+class Game:
     """Core game-state machine for a Nuclear War card game."""
 
     def __init__(
@@ -33,12 +29,12 @@ class game:
     ) -> None:
         """Initialise a new game with optional deck file."""
         self.__name = name
-        self.__state = GAME_STATE_INIT
-        self.__popcards = deck("population")
-        self.__deck = deck("main")
-        self.__players: dict[str, player] = {}
-        self.__turn: list[player] = []
-        self.cur: player | None = None
+        self.__state: GameState = GameState.INIT
+        self.__popcards = Deck("population")
+        self.__deck = Deck("main")
+        self.__players: dict[str, Player] = {}
+        self.__turn: list[Player] = []
+        self.cur: Player | None = None
 
         self.__popcards.add_card(12, int, [1])
         self.__popcards.add_card(10, int, [2])
@@ -54,10 +50,10 @@ class game:
                 self.__deck.load_file(
                     f,
                     {
-                        "warhead": warhead,
-                        "missile": missile,
-                        "bomber": bomber,
-                        "propaganda": propaganda,
+                        "warhead": Warhead,
+                        "missile": Missile,
+                        "bomber": Bomber,
+                        "propaganda": Propaganda,
                     },
                 )
         except OSError as e:
@@ -82,11 +78,11 @@ class game:
         """Called when the game transitions from war back to peace."""
         raise NotImplementedError("demilitarize")
 
-    def pass_control(self, p: player) -> None:
+    def pass_control(self, p: Player) -> None:
         """Called to hand the turn to player *p*."""
         raise NotImplementedError("pass_control")
 
-    def player_msg(self, p: player, msg: str) -> None:
+    def player_msg(self, p: Player, msg: str) -> None:
         """Send a private message to a single player."""
         print(f" >> {p}: {msg}")
 
@@ -94,15 +90,15 @@ class game:
         """Broadcast a message to all players."""
         print(f" >> {self}: {msg}")
 
-    def player_dead(self, p: player) -> None:
+    def player_dead(self, p: Player) -> None:
         """Handle a player death, checking for game-over conditions."""
         while p in self.__turn:
             self.__turn.remove(p)
 
-        if len(self.__alive()) == 0:
+        if not self.__alive():
             p.state = PLAYER_STATE_DEAD
 
-        if len(self.__alive()) == 0:
+        if not self.__alive():
             raise GameOverMan(self)
         elif (
             len(self.__alive() + self.__retaliate()) == 1
@@ -123,13 +119,13 @@ class game:
             if self.cur is p:
                 self.next_turn()
 
-    def get_player(self, name: str) -> player:
+    def get_player(self, name: str) -> Player:
         """Look up a player by name."""
         if name in self.__players:
             return self.__players[name]
         raise GameLogicError(self, f"No such player: {name}")
 
-    def rename_player(self, p: player, new_name: str) -> None:
+    def rename_player(self, p: Player, new_name: str) -> None:
         """Rename a player (handles IRC nick changes)."""
         if new_name in self.__players:
             raise GameLogicError(self, f"Already a player {new_name}")
@@ -137,17 +133,18 @@ class game:
         del self.__players[p.name]
         p.name = new_name
 
-    def state(self) -> int:
-        """Return the current game state constant."""
+    def state(self) -> GameState:
+        """Return the current game state."""
         return self.__state
 
     def war(self) -> None:
         """Hook called when the game transitions to war."""
         return
 
-    def transition(self, state: int) -> None:
+    def transition(self, state: GameState) -> None:
         """Transition the game between peace and war."""
-        assert state in (GAME_STATE_PEACE, GAME_STATE_WAR)
+        if state not in (GameState.PEACE, GameState.WAR):
+            raise ValueError(f"Invalid game state transition: {state!r}")
         if self.__state == state:
             return
         self.__state = state
@@ -158,19 +155,20 @@ class game:
                 p.cards_to_hand()
             self.demilitarize()
 
-    def __get_pop(self) -> Any:
-        return self.__popcards.deal_card()
+    def __get_pop(self) -> int:
+        result: int = self.__popcards.deal_card()
+        return result
 
-    def deal_card(self) -> Any:
+    def deal_card(self) -> object:
         """Pick the top card from the main deck."""
         return self.__deck.deal_card()
 
-    def add_player(self, p: player) -> None:
+    def add_player(self, p: Player) -> None:
         """Add a player to the lobby before the game starts."""
-        assert p.population == 0
-        assert len(p.hand) == 0
-        assert len(p.card_stack) == 0
-
+        if p.population != 0 or p.hand or p.card_stack:
+            raise GameLogicError(
+                self, "Player has already been initialised"
+            )
         if self.__state != GAME_STATE_INIT:
             raise GameLogicError(self, "Game already started")
         if p.name in self.__players:
@@ -180,7 +178,7 @@ class game:
         self.__players[p.name] = p
         p.game = self
 
-    def deal_in_player(self, p: player) -> None:
+    def deal_in_player(self, p: Player) -> None:
         """Deal initial cards and population to a player."""
         for _ in range(9):
             p.population += self.__get_pop()
@@ -195,7 +193,7 @@ class game:
             raise GameLogicError(self, "Lonely without players")
         for p in self.__players.values():
             self.deal_in_player(p)
-        self.__state = GAME_STATE_PEACE
+        self.__state = GameState.PEACE
         self.game_msg("Game started")
         self.next_turn()
 
@@ -205,19 +203,19 @@ class game:
             p.state = PLAYER_STATE_DEAD
         raise GameOverMan(self)
 
-    def __retaliate(self) -> list[player]:
+    def __retaliate(self) -> list[Player]:
         return [
             p for p in self.__players.values()
             if p.state == PLAYER_STATE_RETALIATE
         ]
 
-    def __alive(self) -> list[player]:
+    def __alive(self) -> list[Player]:
         return [
             p for p in self.__players.values()
             if p.state == PLAYER_STATE_ALIVE
         ]
 
-    def get_players(self) -> list[player]:
+    def get_players(self) -> list[Player]:
         """Return all players (alive, retaliating, and dead)."""
         return list(self.__players.values())
 
@@ -226,9 +224,12 @@ class game:
         if self.__state in (GAME_STATE_OVER, GAME_STATE_INIT):
             raise GameLogicError(self, "Game not in progress")
 
-        if self.cur is not None and self.cur.state == PLAYER_STATE_RETALIATE:
+        if (
+            self.cur is not None
+            and self.cur.state == PLAYER_STATE_RETALIATE
+        ):
             self.cur.state = PLAYER_STATE_DEAD
-            game.player_dead(self, self.cur)
+            Game.player_dead(self, self.cur)
 
         while self.__retaliate():
             self.cur = self.__retaliate()[0]
@@ -245,7 +246,7 @@ class game:
             raise GameOverMan(self, self.__alive()[0])
 
         if self.cur is not None and self.cur.state == PLAYER_STATE_DEAD:
-            self.transition(GAME_STATE_PEACE)
+            self.transition(GameState.PEACE)
 
         while True:
             if not self.__turn:
@@ -258,3 +259,7 @@ class game:
                 continue
             self.pass_control(self.cur)
             break
+
+
+# Backward-compatible alias
+game = Game
