@@ -1,147 +1,162 @@
-# Copyright (c) 2007 Gianni Tedesco
-# Released under the terms of the GNU GPL v2 or later
-#
-# Player class
+"""Player class for the Nuclear War card game."""
 
-from globals import *
+from __future__ import annotations
 
-class player:
-	def __init__(self, name):
-		self.name = name
-		self.hand = []
-		self.population = 0
-		self.card_stack = []
-		self.weapon = None
-		self.game = None
-		self.state = PLAYER_STATE_ALIVE
-		self.missturns = 0
-		return
-	
-	def __str__(self):
-		return "player(%s)"%self.name
+from typing import TYPE_CHECKING, Any
 
-	def __repr__(self):
-		return "player('%s')"%self.name
+if TYPE_CHECKING:
+    from .game import Game
 
-	def __card_by_idx(self, idx):
-		"Return a card from the hand by index"
+from .globals import (
+    CARD_STACK_LEN,
+    PlayerState,
+    GAME_STATE_INIT,
+    GAME_STATE_WAR,
+    PLAYER_STATE_ALIVE,
+    PLAYER_STATE_DEAD,
+    PLAYER_STATE_RETALIATE,
+    IllegalMoveError,
+)
 
-		if idx < 0 or idx >= len(self.hand):
-			raise IllegalMoveError(self.game, self,
-						"Bad Card Index: %d"%idx)
-		assert len(self.card_stack) <= CARD_STACK_LEN
-		return self.hand.pop(idx)
-	
-	def __card_by_name(self, name):
-		"Return a card from the hand by name"
 
-		strl = map(lambda x:x.__str__().lower(), self.hand)
-		repl = map(lambda x:x.__repr__().lower(), self.hand)
-		for i in range(0, len(self.hand)):
-			if repl[i] != name.lower() and strl[i] != name.lower():
-				continue
-			return self.hand.pop(i)
-		raise IllegalMoveError(self.game, self,
-					"Card %s not found"%name)
+class Player:
+    """Represents a single participant in a Nuclear War game."""
 
-	def kill(self, suicide=False):
-		if self.state == PLAYER_STATE_DEAD:
-			return
-		if self.game == None:
-			return
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.hand: list[Any] = []
+        self.population: int = 0
+        self.card_stack: list[Any] = []
+        self.weapon: Any | None = None
+        self.game: "Game | None" = None
+        self.state: PlayerState = PlayerState.ALIVE
+        self.missturns: int = 0
 
-		if suicide == False and self.game.state() == GAME_STATE_WAR:
-			self.state = PLAYER_STATE_RETALIATE
-		else:
-			self.state = PLAYER_STATE_DEAD
-		self.cards_to_hand()
-		self.game.player_dead(self)
+    def __str__(self) -> str:
+        return f"player({self.name})"
 
-	def cards_to_hand(self):
-		"Move all cards back in to the hand"
+    def __repr__(self) -> str:
+        return f"player('{self.name}')"
 
-		self.hand.extend(self.card_stack)
-		self.card_stack = []
-		if self.weapon != None:
-			self.hand.append(self.weapon)
-			self.weapon = None
+    def __card_by_idx(self, idx: int) -> Any:
+        if idx < 0 or idx >= len(self.hand):
+            raise IllegalMoveError(
+                self.game, self, f"Bad Card Index: {idx}"
+            )
+        return self.hand.pop(idx)
 
-	def flip_card(self, tgt):
-		"Flip card to take a turn in the game"
+    def __card_by_name(self, name: str) -> Any:
+        strl = [str(x).lower() for x in self.hand]
+        repl = [repr(x).lower() for x in self.hand]
+        for i in range(len(self.hand)):
+            if repl[i] == name.lower() or strl[i] == name.lower():
+                return self.hand.pop(i)
+        raise IllegalMoveError(self.game, self, f"Card {name} not found")
 
-		if self.state != PLAYER_STATE_ALIVE:
-			raise IllegalMoveError(self.game, self,
-						"You're not alive!")
-		if self.game.cur != self:
-			raise IllegalMoveError(self.game, self,
-						"Not your turn")
-		if len(self.card_stack) != CARD_STACK_LEN:
-			raise IllegalMoveError(self.game, self,
-						"Cards not queued")
-		c = self.card_stack.pop(0)
-		try:
-			c.dequeue(self.game, self, tgt)
-		except:
-			self.card_stack.insert(0, c)
-			raise
+    def terminate(self, suicide: bool = False) -> None:
+        """Kill this player, optionally triggering retaliation."""
+        if self.state == PLAYER_STATE_DEAD:
+            return
+        if self.game is None:
+            return
 
-	def use_card(self, arg, tgt):
-		"Use card for final retaliation"
+        if not suicide and self.game.state() == GAME_STATE_WAR:
+            self.state = PLAYER_STATE_RETALIATE
+        else:
+            self.state = PLAYER_STATE_DEAD
+        self.cards_to_hand()
+        self.game.player_dead(self)
 
-		if self.game.cur != self:
-			raise IllegalMoveError(self.game, self,
-						"Not your turn")
-		if self.state != PLAYER_STATE_RETALIATE:
-			raise IllegalMoveError(self.game, self,
-					"It's not final retaliation!")
+    # Public alias keeping the original name
+    kill = terminate
 
-		try:
-			c = self.__card_by_idx(int(arg))
-		except ValueError:
-			c = self.__card_by_name(arg)
+    def cards_to_hand(self) -> None:
+        """Move all queued and deployed cards back into the hand."""
+        self.hand.extend(self.card_stack)
+        self.card_stack = []
+        if self.weapon is not None:
+            self.hand.append(self.weapon)
+            self.weapon = None
 
-		try:
-			c.dequeue(self.game, self, tgt)
-		except:
-			self.hand.append(c)
-			raise
+    def flip_card(self, tgt: "Player | None") -> None:
+        """Flip (execute) the first queued card during a normal turn."""
+        if self.state != PLAYER_STATE_ALIVE:
+            raise IllegalMoveError(self.game, self, "You're not alive!")
+        if self.game is None or self.game.cur != self:
+            raise IllegalMoveError(self.game, self, "Not your turn")
+        if len(self.card_stack) != CARD_STACK_LEN:
+            raise IllegalMoveError(self.game, self, "Cards not queued")
+        c = self.card_stack.pop(0)
+        try:
+            c.dequeue(self.game, self, tgt)
+        except Exception:
+            self.card_stack.insert(0, c)
+            raise
 
-	def queue_card(self, arg):
-		"Push a card in to the queue"
+    def use_card(self, arg: str, tgt: "Player | None") -> None:
+        """Use a card during final retaliation."""
+        if self.game is None or self.game.cur != self:
+            raise IllegalMoveError(self.game, self, "Not your turn")
+        if self.state != PLAYER_STATE_RETALIATE:
+            raise IllegalMoveError(
+                self.game, self, "It's not final retaliation!"
+            )
 
-		if len(self.card_stack) == CARD_STACK_LEN:
-			raise IllegalMoveError(self.game, self, "Queue Full")
-		if self.state != PLAYER_STATE_ALIVE:
-			raise IllegalMoveError(self.game, self,
-						"Cannot queue cards when dead")
+        try:
+            c = self.__card_by_idx(int(arg))
+        except ValueError:
+            c = self.__card_by_name(arg)
 
-		try:
-			c = self.__card_by_idx(int(arg))
-		except ValueError:
-			c = self.__card_by_name(arg)
+        try:
+            c.dequeue(self.game, self, tgt)
+        except Exception:
+            self.hand.append(c)
+            raise
 
-		self.card_stack.append(c)
-		if len(self.card_stack) == CARD_STACK_LEN and \
-			self.game.state() == GAME_STATE_INIT:
-			self.game.game_msg("%s is ready"%self.name)
-		return c
+    def queue_card(self, arg: str) -> Any:
+        """Push a card from the hand into the queue."""
+        if len(self.card_stack) == CARD_STACK_LEN:
+            raise IllegalMoveError(self.game, self, "Queue Full")
+        if self.state != PLAYER_STATE_ALIVE:
+            raise IllegalMoveError(
+                self.game, self, "Cannot queue cards when dead"
+            )
 
-	def pwn(self, pwnage):
-		"Decrement population"
+        try:
+            c = self.__card_by_idx(int(arg))
+        except ValueError:
+            c = self.__card_by_name(arg)
 
-		i = min(self.population, pwnage)
-		self.population = self.population - i
-		if self.population == 0:
-			self.kill()
+        self.card_stack.append(c)
+        if (
+            len(self.card_stack) == CARD_STACK_LEN
+            and self.game is not None
+            and self.game.state() == GAME_STATE_INIT
+        ):
+            self.game.game_msg(f"{self.name} is ready")
+        return c
 
-	def transfer_population(self, converts, tgt):
-		"Transfer population to another player"
+    def pwn(self, pwnage: int) -> None:
+        """Apply population damage to this player."""
+        i = min(self.population, pwnage)
+        self.population -= i
+        if self.population == 0:
+            self.terminate()
 
-		if self.state != PLAYER_STATE_ALIVE:
-			raise IllegalMoveError(self.game, self,
-				"Cannot transfer population from dead enemy")
-		i = min(self.population, converts)
-		self.population = self.population - i
-		tgt.population = tgt.population + i
-		if self.population == 0:
-			self.kill()
+    def transfer_population(self, converts: int, tgt: "Player") -> None:
+        """Transfer population from this player to another."""
+        if self.state != PLAYER_STATE_ALIVE:
+            raise IllegalMoveError(
+                self.game,
+                self,
+                "Cannot transfer population from dead enemy",
+            )
+        i = min(self.population, converts)
+        self.population -= i
+        tgt.population += i
+        if self.population == 0:
+            self.terminate()
+
+
+# Backward-compatible alias
+player = Player

@@ -1,84 +1,94 @@
-# Copyright (c) 2007 Gianni Tedesco
-# Released under the terms of the GNU GPL v2 or later
-#
-# Simulate a never-ending deck of cards. We do this by emulating a
-# single deck. When all cards have been dealt, we simply replenish
-# the deck with the original set of cards. It generates cards as they
-# are dealt using the system PRNG for shuffling.
+"""Simulates a never-ending deck of cards using a random shuffle."""
 
-from globals import *
-from random import randint
+from __future__ import annotations
 
-class deck_card:
-	def __init__(self, max, cls, args):
-		self.cnt = max
-		self.max = max
-		self.cls = cls
-		self.args = args
+import random
+from typing import Any
 
-class deck:
-	def __init__(self, name):
-		self.__name = name
-		self.__cards = []
+from .globals import GameLogicError
 
-	def __str__(self):
-		return "deck(%s,%u)"%(self.__name, len(self))
 
-	def __repr__(self):
-		return "deck(%s)"%self.__name
+class _DeckCard:
+    """Internal representation of a card type in the deck."""
 
-	def __replenish(self):
-		for x in self.__cards:
-			x.cnt = x.max
+    def __init__(self, max_cnt: int, cls: type[Any], args: list[Any]) -> None:
+        self.cnt = max_cnt
+        self.max = max_cnt
+        self.cls = cls
+        self.args = args
 
-	def __len__(self):
-		return sum(map(lambda x:x.cnt, self.__cards))
 
-	def deal_card(self):
-		if len(self.__cards) == 0:
-			return None
+class Deck:
+    """A shuffled, replenishing deck of game cards."""
 
-		ds = len(self)
-		if ds == 0:
-			self.__replenish()
-			ds = len(self)
+    def __init__(self, name: str) -> None:
+        self.__name = name
+        self.__cards: list[_DeckCard] = []
 
-		r = randint(0, ds - 1)
-		i = 0
-		for c in self.__cards:
-			i = i + c.cnt
-			if r < i:
-				c.cnt = c.cnt - 1
-				return c.cls(*c.args)
+    def __str__(self) -> str:
+        return f"deck({self.__name},{len(self)})"
 
-	def add_card(self, maxcnt, cls, args):
-		self.__cards.append(deck_card(maxcnt, cls, args))
+    def __repr__(self) -> str:
+        return f"deck({self.__name})"
 
-	def __do_args(self, item):
-		try:
-			return int(item)
-		except:
-			return item
+    def __replenish(self) -> None:
+        for x in self.__cards:
+            x.cnt = x.max
 
-	def load_file(self, f, clsmap):
-		while True:
-			ln = f.readline()
-			if ln == '':
-				break
-			ln = ln[:-1]
-			if ln == '':
-				continue
-			if ln[0] == '#':
-				continue
-			ln = ln.split()
-			if len(ln) < 2:
-				raise Exception("Bad line: %s"%ln)
-			try:
-				maxcnt = int(ln[0])
-			except:
-				raise Exception("%s not an integer"%ln[0])
-			if not clsmap.has_key(ln[1]):
-				raise Exception("No such card: %s"%ln[1])
-			cls = clsmap[ln[1]]
-			args = map(self.__do_args, ln[2:])
-			self.add_card(maxcnt, cls, args)
+    def __len__(self) -> int:
+        return sum(x.cnt for x in self.__cards)
+
+    def deal_card(self) -> Any:
+        """Deal a single card at random from the deck."""
+        if not self.__cards:
+            return None
+
+        ds = len(self)
+        if ds == 0:
+            self.__replenish()
+            ds = len(self)
+
+        r = random.randint(0, ds - 1)  # noqa: S311
+        i = 0
+        for c in self.__cards:
+            i += c.cnt
+            if r < i:
+                c.cnt -= 1
+                return c.cls(*c.args)
+        return None  # unreachable, satisfies mypy
+
+    def add_card(self, maxcnt: int, cls: type[Any], args: list[Any]) -> None:
+        """Register a card type with this deck."""
+        self.__cards.append(_DeckCard(maxcnt, cls, args))
+
+    @staticmethod
+    def __do_args(item: str) -> int | str:
+        try:
+            return int(item)
+        except ValueError:
+            return item
+
+    def load_file(
+        self, f: Any, clsmap: dict[str, type[Any]]
+    ) -> None:
+        """Populate this deck from a deck-definition file."""
+        for line in f:
+            ln = line.rstrip("\n")
+            if not ln or ln[0] == "#":
+                continue
+            parts = ln.split()
+            if len(parts) < 2:
+                raise GameLogicError(None, f"Bad line: {parts}")
+            try:
+                maxcnt = int(parts[0])
+            except ValueError:
+                raise GameLogicError(None, f"{parts[0]} not an integer")
+            if parts[1] not in clsmap:
+                raise GameLogicError(None, f"No such card: {parts[1]}")
+            cls = clsmap[parts[1]]
+            args: list[int | str] = [self.__do_args(t) for t in parts[2:]]
+            self.add_card(maxcnt, cls, args)
+
+
+# Backward-compatible alias
+deck = Deck
